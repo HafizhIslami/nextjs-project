@@ -1,19 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import Room from "../models/room";
+import Room, { IRoom } from "../models/room";
+import { catchAsyncErrors } from "../middlewares/catchAsyncErrors";
 
-export const allRooms = async function GET(request: NextRequest) {
-  const resPerPage = 8;
+export const allRooms = catchAsyncErrors(async (req: NextRequest) => {
+  const resPerPage = 4;
   const room = await Room.find();
+
+  const queryStr: any = {};
+  const { searchParams } = new URL(req.url);
+  searchParams.forEach((val, key) => {
+    queryStr[key] = val;
+  });
+
+  const count = await Room.countDocuments();
+
+  const apiFilters = new APIFilters(Room, queryStr);
+  let rooms: IRoom[] = await apiFilters.query;
+  const filteredRoomsCount = rooms.length;
+
+  apiFilters.pagination(resPerPage);
+  rooms = await apiFilters.query;
 
   return NextResponse.json({
     success: true,
+    count,
+    filteredRoomsCount,
     resPerPage,
-    count: room.length,
     room,
   });
-};
+});
 
-export const newRoom = async (req: NextRequest) => {
+export const newRoom = catchAsyncErrors(async (req: NextRequest) => {
   const body = await req.json();
   const room = await Room.create(body);
 
@@ -21,57 +38,54 @@ export const newRoom = async (req: NextRequest) => {
     success: true,
     room,
   });
-};
+});
 
-export const getRoomDetail = async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const room = await Room.findById(params.id);
+export const getRoomDetail = catchAsyncErrors(
+  async (request: NextRequest, { params }: { params: { id: string } }) => {
+    const room = await Room.findById(params.id);
 
-  if (!room) {
-    return NextResponse.json({ message: "Room not found" }, { status: 404 });
+    if (!room) {
+      return NextResponse.json({ message: "Room not found" }, { status: 404 });
+    }
+    return NextResponse.json({
+      success: true,
+      room,
+    });
   }
-  return NextResponse.json({
-    success: true,
-    room,
-  });
-};
+);
 
-export const updateRoom = async (
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) => {
-  let room = await Room.findById(params.id);
-  const body = await req.json();
+export const updateRoom = catchAsyncErrors(
+  async (req: NextRequest, { params }: { params: { id: string } }) => {
+    let room = await Room.findById(params.id);
+    const body = await req.json();
 
-  if (!room) {
-    return NextResponse.json({ message: "Room not found" }, { status: 404 });
+    if (!room) {
+      return NextResponse.json({ message: "Room not found" }, { status: 404 });
+    }
+
+    room = await Room.findByIdAndUpdate(params.id, body, {
+      new: true,
+    });
+
+    return NextResponse.json({
+      success: true,
+      room,
+    });
   }
+);
 
-  room = await Room.findByIdAndUpdate(params.id, body, {
-    new: true,
-  });
+export const deleteRoom = catchAsyncErrors(
+  async (request: NextRequest, { params }: { params: { id: string } }) => {
+    const room = await Room.findById(params.id);
 
-  return NextResponse.json({
-    success: true,
-    room,
-  });
-};
+    if (!room) {
+      return NextResponse.json({ message: "Room not found" }, { status: 404 });
+    }
 
-export const deleteRoom = async (
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) => {
-  const room = await Room.findById(params.id);
+    await room.deleteOne();
 
-  if (!room) {
-    return NextResponse.json({ message: "Room not found" }, { status: 404 });
+    return NextResponse.json({
+      success: true,
+    });
   }
-
-  await room.deleteOne();
-
-  return NextResponse.json({
-    success: true,
-  });
-};
+);
