@@ -1,4 +1,4 @@
-import mongoose, { Document } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IImage extends Document {
   public_id: string;
@@ -46,7 +46,7 @@ export interface IRoom extends Document {
   createdAt: Date;
 }
 
-const roomSchema = new mongoose.Schema({
+const roomSchema: Schema<IRoom> = new Schema({
   name: {
     type: String,
     required: [true, "Please enter room name"],
