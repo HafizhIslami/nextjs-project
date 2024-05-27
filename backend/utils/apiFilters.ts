@@ -40,3 +40,5 @@ class APIFilters {
     return this;
   }
 }
+
+export default APIFilters;

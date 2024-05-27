@@ -1,32 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import Room, { IRoom } from "../models/room";
 import { catchAsyncErrors } from "../middlewares/catchAsyncErrors";
+import APIFilters from "../utils/apiFilters";
 
+// still have a problem in allRooms at rooms
 export const allRooms = catchAsyncErrors(async (req: NextRequest) => {
-  const resPerPage = 4;
-  const room = await Room.find();
+  const resPerPage: number = 3;
 
   const queryStr: any = {};
   const { searchParams } = new URL(req.url);
+
   searchParams.forEach((val, key) => {
     queryStr[key] = val;
   });
-
-  const count = await Room.countDocuments();
-
-  const apiFilters = new APIFilters(Room, queryStr);
+  const roomsCount = await Room.countDocuments();
+  
+  const apiFilters = new APIFilters(Room, queryStr).search().filter();
   let rooms: IRoom[] = await apiFilters.query;
-  const filteredRoomsCount = rooms.length;
-
+  const filteredRoomsCount: number = rooms.length;
+  
   apiFilters.pagination(resPerPage);
-  rooms = await apiFilters.query;
+  rooms = await apiFilters.query.clone();
 
   return NextResponse.json({
     success: true,
-    count,
+    roomsCount,
     filteredRoomsCount,
     resPerPage,
-    room,
+    rooms,
   });
 });
 
