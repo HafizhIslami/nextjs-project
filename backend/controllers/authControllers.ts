@@ -3,6 +3,9 @@ import { catchAsyncErrors } from "../middlewares/catchAsyncErrors";
 import User from "../models/user";
 import ErrorHandler from "../utils/errorHandler";
 import { delete_file, upload_file } from "../utils/cloudinary";
+import { resetPasswordHTMLTemplate } from "../utils/emailTemplates";
+import sendEmail from "../utils/sendEmail";
+import crypto from "crypto";
 
 export const registerUser = catchAsyncErrors(async (req: NextRequest) => {
   const body = await req.json();
@@ -70,3 +73,70 @@ export const uploadAvatar = catchAsyncErrors(async (req: NextRequest) => {
     success: true,
   });
 });
+
+export const forgotPassword = catchAsyncErrors(async (req: NextRequest) => {
+  const body = await req.json();
+
+  const user = await User.findOne({ email: body.email });
+
+  if (!user) {
+    throw new ErrorHandler("User not found with this email", 404);
+  }
+
+  const resetToken = user.getResetPasswordToken();
+
+  await user.save();
+
+  const resetUrl = `${process.env.API_URL}/password/reset/${resetToken}`;
+
+  const message = resetPasswordHTMLTemplate(user?.name, resetUrl);
+
+  try {
+    await sendEmail({
+      email: user?.email,
+      subject: "Bookit Password Recovery",
+      message,
+    });
+  } catch (error: any) {
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save();
+    throw new ErrorHandler(error.message, 500);
+  }
+
+  return NextResponse.json({
+    success: true,
+  });
+});
+
+export const resetPassword = catchAsyncErrors(
+  async (req: NextRequest, { params }: { params: { token: string } }) => {
+    const body = await req.json();
+
+        const resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(params.token)
+    .digest("hex");
+    
+    const user = await User.findOne({ resetPasswordToken,resetPasswordExpire:{$gt:Date.now()} });
+
+    if (!user) {
+      throw new ErrorHandler("Password reset token is invalid or has been expired", 404);
+    }
+
+    if (body.password !== body.confirmPassword) {
+      throw new ErrorHandler("Password does not match", 400);
+    }
+
+    user.password = body.password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save()
+    
+    return NextResponse.json({
+      success: true,
+    });
+  }
+);
