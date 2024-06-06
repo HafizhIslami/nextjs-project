@@ -29,7 +29,7 @@ yarn-error.log*
 .env*.local
 
 # global env files
-next.config.mjs
+*.config.mjs
 
 # vercel
 .vercel
