@@ -1,4 +1,9 @@
-const BookingDatePicker = () => {
+interface Props {
+  room: any;
+}
+const BookingDatePicker = ({room}:Props) => {
+  
+
   return (
     <div className="booking-card shadow p-4">
       <p className="price-per-night">
