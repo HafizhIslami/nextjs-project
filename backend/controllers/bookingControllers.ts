@@ -1,17 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { catchAsyncErrors } from "../middlewares/catchAsyncErrors";
-import Booking from "../models/booking";
+import Booking, { IBooking } from "../models/booking";
 import user from "../models/user";
 
+// Create new room booking  => /api/
 export const newBooking = catchAsyncErrors(async (req: NextRequest) => {
   const body = await req.json();
-
-  const { room, checkIn, checkOut, daysOfStay, amountPaid, paymentInfo } = body;
+  const {
+    room,
+    checkInDate,
+    checkOutDate,
+    daysOfStay,
+    amountPaid,
+    paymentInfo,
+  } = body;
 
   const booking = await Booking.create({
     room,
-    checkIn,
-    checkOut,
+    checkInDate,
+    checkOutDate,
     daysOfStay,
     amountPaid,
     paymentInfo,
@@ -21,3 +28,26 @@ export const newBooking = catchAsyncErrors(async (req: NextRequest) => {
 
   return NextResponse.json({ booking });
 });
+
+// Check room availability  => /api/bookings/check?roomId=
+export const checkRoomBookingAvailability = catchAsyncErrors(
+  async (req: NextRequest) => {
+    const { searchParams } = new URL(req.url);
+    const roomId = searchParams.get("roomId");
+
+    const checkInDate = new Date(searchParams.get("checkInDate") as string);
+    const checkOutDate = new Date(searchParams.get("checkOutDate") as string);
+
+    const bookings: IBooking[] = await Booking.find({
+      room: roomId,
+      $and: [
+        { checkInDate: { $lte: checkOutDate } },
+        { checkOutDate: { $gte: checkInDate } },
+      ],
+    });
+
+    const isAvailable: boolean = bookings.length === 0;
+
+    return NextResponse.json({ isAvailable });
+  }
+);
