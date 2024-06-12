@@ -1,6 +1,9 @@
 import { IRoom } from "@/backend/models/room";
-import { useState } from "react";
+import { calculateDayOfStay } from "@/helpers/helpers";
+import { useNewBookingMutation } from "@/redux/api/bookingApi";
+import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
+import toast from "react-hot-toast";
 
 interface Props {
   room: IRoom;
@@ -8,14 +11,43 @@ interface Props {
 const BookingDatePicker = ({ room }: Props) => {
   const [checkInDate, setCheckInDate] = useState(new Date());
   const [checkOutDate, setCheckOutDate] = useState(new Date());
+  const [daysOfStay, setDaysOfStay] = useState(0);
+
+  const [newBooking, { isLoading, isSuccess, error }] = useNewBookingMutation();
+
+  useEffect(() => {
+    if (error && "data" in error) {
+      toast.error(error?.data?.errMessage);
+    }
+  }, [error]);
 
   const onChangeHandler = (dates: Date[]) => {
     const [checkInDate, checkOutDate] = dates;
 
     setCheckInDate(checkInDate);
     setCheckOutDate(checkOutDate);
-    
-    console.log(checkInDate, checkOutDate);
+
+    if (checkInDate && checkOutDate) {
+      const days = calculateDayOfStay(checkInDate, checkOutDate);
+
+      setDaysOfStay(days);
+    }
+  };
+
+  const bookRoom = () => {
+    const bookingData = {
+      roomId: room._id,
+      checkInDate,
+      checkOutDate,
+      daysOfStay,
+      amountPaid: daysOfStay * room.pricePerNight,
+      paymentInfo: {
+        id: "STRIPE_ID",
+        status: "PAID",
+      },
+    };
+
+    newBooking(bookingData);
   };
 
   return (
@@ -35,6 +67,9 @@ const BookingDatePicker = ({ room }: Props) => {
         selectsRange
         inline
       />
+      <button className="btn py-3 form-btn p-4" onClick={bookRoom}>
+        {isLoading ? "Loading..." : "Book Now"}
+      </button>
     </div>
   );
 };
