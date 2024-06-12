@@ -5,13 +5,12 @@ import user from "../models/user";
 
 export const newBooking = catchAsyncErrors(async (req: NextRequest) => {
   const body = await req.json();
-
-  const { room, checkIn, checkOut, daysOfStay, amountPaid, paymentInfo } = body;
+  const { room, checkInDate, checkOutDate, daysOfStay, amountPaid, paymentInfo } = body;
 
   const booking = await Booking.create({
     room,
-    checkIn,
-    checkOut,
+    checkInDate,
+    checkOutDate,
     daysOfStay,
     amountPaid,
     paymentInfo,
