@@ -1,6 +1,9 @@
 import { IRoom } from "@/backend/models/room";
 import { calculateDayOfStay } from "@/helpers/helpers";
-import { useNewBookingMutation } from "@/redux/api/bookingApi";
+import {
+  useLazyCheckBookingAvailabilityQuery,
+  useNewBookingMutation,
+} from "@/redux/api/bookingApi";
 import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import toast from "react-hot-toast";
@@ -12,8 +15,13 @@ const BookingDatePicker = ({ room }: Props) => {
   const [checkInDate, setCheckInDate] = useState(new Date());
   const [checkOutDate, setCheckOutDate] = useState(new Date());
   const [daysOfStay, setDaysOfStay] = useState(0);
+  const [dateSelected, setDateSelected] = useState(false);
 
   const [newBooking, { isLoading, isSuccess, error }] = useNewBookingMutation();
+  const [checkBookingAvailability, { data }] =
+    useLazyCheckBookingAvailabilityQuery();
+
+  const isAvailable = data?.isAvailable;
 
   useEffect(() => {
     if (error && "data" in error) {
@@ -31,12 +39,20 @@ const BookingDatePicker = ({ room }: Props) => {
       const days = calculateDayOfStay(checkInDate, checkOutDate);
 
       setDaysOfStay(days);
+      checkBookingAvailability({
+        id: room._id,
+        checkInDate: checkInDate.toISOString(),
+        checkOutDate: checkOutDate.toISOString(),
+      });
+      setDateSelected(true);
+    } else {
+      setDateSelected(false);
     }
   };
 
   const bookRoom = () => {
     const bookingData = {
-      roomId: room._id,
+      room: room._id,
       checkInDate,
       checkOutDate,
       daysOfStay,
@@ -67,6 +83,15 @@ const BookingDatePicker = ({ room }: Props) => {
         selectsRange
         inline
       />
+      {isAvailable ? (
+        <p className="alert alert-success my-3" hidden={!dateSelected}>
+          Room is available. Let's book now !
+        </p>
+      ) : (
+        <p className="alert alert-danger my-3" hidden={!dateSelected}>
+          Room is not available. Please select another dates.
+        </p>
+      )}
       <button className="btn py-3 form-btn p-4" onClick={bookRoom}>
         {isLoading ? "Loading..." : "Book Now"}
       </button>
