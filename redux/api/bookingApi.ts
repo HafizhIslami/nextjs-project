@@ -33,5 +33,5 @@ export const bookingApi = createApi({
 export const {
   useNewBookingMutation,
   useLazyCheckBookingAvailabilityQuery,
-  useLazyGetRoomBookedDatesQuery,
+  useGetRoomBookedDatesQuery,
 } = bookingApi;
