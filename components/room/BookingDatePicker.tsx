@@ -1,6 +1,7 @@
 import { IRoom } from "@/backend/models/room";
 import { calculateDayOfStay } from "@/helpers/helpers";
 import {
+  useGetBookedDatesQuery,
   useLazyCheckBookingAvailabilityQuery,
   useNewBookingMutation,
 } from "@/redux/api/bookingApi";
@@ -17,11 +18,17 @@ const BookingDatePicker = ({ room }: Props) => {
   const [daysOfStay, setDaysOfStay] = useState(0);
   const [dateSelected, setDateSelected] = useState(false);
 
-  const [newBooking, { isLoading, isSuccess, error }] = useNewBookingMutation();
+  const [newBooking, { isLoading, error }] = useNewBookingMutation();
   const [checkBookingAvailability, { data }] =
     useLazyCheckBookingAvailabilityQuery();
 
   const isAvailable = data?.isAvailable;
+
+  const { data: { bookedDates: dates } = {} } = useGetBookedDatesQuery(
+    room._id
+  );
+  console.log("dates",dates);
+  const excludeDates = dates?.map((date: string) => new Date(date)) || [];
 
   useEffect(() => {
     if (error && "data" in error) {
@@ -80,12 +87,13 @@ const BookingDatePicker = ({ room }: Props) => {
         startDate={checkInDate}
         endDate={checkOutDate}
         minDate={new Date()}
+        excludeDates={excludeDates}
         selectsRange
         inline
       />
       {isAvailable ? (
         <p className="alert alert-success my-3" hidden={!dateSelected}>
-          Room is available. Let's book now !
+          Room is available. Let's book now!
         </p>
       ) : (
         <p className="alert alert-danger my-3" hidden={!dateSelected}>
