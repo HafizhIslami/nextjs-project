@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { catchAsyncErrors } from "../middlewares/catchAsyncErrors";
 import Booking, { IBooking } from "../models/booking";
-import user from "../models/user";
+import Moment from "moment";
+import { extendMoment } from "moment-range";
 
+const moment = extendMoment(Moment);
 // Create new room booking  => /api/
 export const newBooking = catchAsyncErrors(async (req: NextRequest) => {
   const body = await req.json();
@@ -55,3 +57,20 @@ export const checkRoomBookingAvailability = catchAsyncErrors(
     return NextResponse.json({ isAvailable });
   }
 );
+
+export const getRoomBookedDates = catchAsyncErrors(async (req: NextRequest) => {
+  const { searchParams } = new URL(req.url);
+  const roomId = searchParams.get("roomId");
+
+  const bookings = await Booking.find({ room: roomId });
+  console.log(bookings);
+  const bookedDates = bookings.flatMap((booking) =>
+    Array.from(
+      moment
+        .range(moment(booking.checkInDate), moment(booking.checkOutDate))
+        .by("day")
+    )
+  );
+
+  return NextResponse.json({ bookedDates });
+});
