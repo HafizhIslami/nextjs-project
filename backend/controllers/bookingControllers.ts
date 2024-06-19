@@ -3,6 +3,7 @@ import { catchAsyncErrors } from "../middlewares/catchAsyncErrors";
 import Booking, { IBooking } from "../models/booking";
 import Moment from "moment";
 import { extendMoment } from "moment-range";
+import ErrorHandler from "../utils/errorHandler";
 
 const moment = extendMoment(Moment);
 // Create new room booking  => /api/
@@ -87,6 +88,10 @@ export const myBookings = catchAsyncErrors(async (req: NextRequest) => {
 export const getBookingDetails = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
     const booking = await Booking.findById(params.id);
+
+    if (booking.user !== req.user._id) {
+      throw new ErrorHandler("You can not view this booking", 403);
+    }
 
     return NextResponse.json({ booking });
   }
