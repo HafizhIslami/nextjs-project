@@ -58,6 +58,7 @@ export const checkRoomBookingAvailability = catchAsyncErrors(
   }
 );
 
+// Check room booked dates  => /api/bookings/booked_dates
 export const getRoomBookedDates = catchAsyncErrors(async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
   const roomId = searchParams.get("roomId");
@@ -74,3 +75,19 @@ export const getRoomBookedDates = catchAsyncErrors(async (req: NextRequest) => {
 
   return NextResponse.json({ bookedDates });
 });
+
+// Check current user bookings  => /api/bookings/me
+export const myBookings = catchAsyncErrors(async (req: NextRequest) => {
+  const bookings = await Booking.find({ user: req.user._id });
+
+  return NextResponse.json({ bookings });
+});
+
+// Get booking details  => /api/bookings/:id
+export const getBookingDetails = catchAsyncErrors(
+  async (req: NextRequest, { params }: { params: { id: string } }) => {
+    const booking = await Booking.findById(params.id);
+
+    return NextResponse.json({ booking });
+  }
+);
