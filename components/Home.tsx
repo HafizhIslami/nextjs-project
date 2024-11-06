@@ -19,7 +19,7 @@ interface Props {
 
 // this script still defect by allRooms fn. check later in roomControllers.ts
 const Home = ({ data }: Props) => {
-  const [reqEntries, setReqEntries] = useState(4);
+  // const [reqEntries, setReqEntries] = useState(4);
   const { rooms, resPerPage, filteredRoomsCount } = data;
   const searchParams = useSearchParams();
   const filter =
@@ -27,10 +27,10 @@ const Home = ({ data }: Props) => {
     searchParams.has("category") ||
     searchParams.has("guests");
 
-  const reqEntriesHandler = (totalEntry: number) => {
-    setReqEntries(totalEntry);
-    console.log(totalEntry);
-  };
+  // const reqEntriesHandler = (totalEntry: number) => {
+  //   setReqEntries(totalEntry);
+  //   console.log(totalEntry);
+  // };
   return (
     <div>
       <section id="rooms" className="container mt-5">
