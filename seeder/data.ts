@@ -3,7 +3,7 @@ export const rooms = [
     name: "Charming Studio < 10 Miles to Wells' Beaches!",
     pricePerNight: 168,
     description:
-      "A friendly atmosphere and natural delights await your visit to the town of Wells! Stay at this well-equipped 1-bath studio and enjoy easy access to several beaches, including Wells Beach and Drakes Island Beach, as well as Rachel Carson National Wildlife Refuge - the best spot for wildlife viewing just 8 miles away. Not to mention, with the downtown area just 10 minutes from vacation rental.",
+      "Discover the charming town of Wells, where a welcoming ambiance and nature's beauty await you! This fully equipped 1-bath studio is the perfect retreat, offering convenient access to nearby beaches like Wells Beach and Drakes Island Beach. You can also explore the Rachel Carson National Wildlife Refuge, a prime destination for wildlife enthusiasts, located just 8 miles away. Plus, the downtown area is only a short 10-minute drive from your cozy vacation spot.",
     address: "4667 Bicetown Street, New York, NY, 10004",
     guestCapacity: 1,
     numOfBeds: 1,
@@ -31,7 +31,7 @@ export const rooms = [
     name: "Picturesque 2-Story Farmhouse w/Private Hot Tub",
     pricePerNight: 242,
     description:
-      "Find plenty of space for a family or a large group at this picturesque Wells home, the perfect spot for a relaxing getaway in charming, quintessential Maine style! Spend your days on the beautiful nearby beaches, and come home to a large backyard and orchard where your kids can play, as well as a patio with a gas grill for barbecues on summer afternoons.",
+      "Enjoy plenty of room for your family or a large group at this scenic Wells home, ideal for a peaceful retreat in classic Maine style! Spend your days soaking up the sun on the nearby beaches, then return to a spacious backyard and orchard where the kids can run around, plus a patio with a gas grill perfect for summer afternoon barbecues.",
     address: "200 Olympic Dr, Stafford, VS, 22554",
     guestCapacity: 2,
     numOfBeds: 2,
@@ -59,7 +59,7 @@ export const rooms = [
     name: "Downtown Portsmouth Private Getaway! Hot Tub",
     pricePerNight: 85,
     description:
-      "Absolutely the best location in Portsmouth! Beautifully furnished, this spacious and private home is perfectly suited for taking in all of the must-see sights and historic landmarks that make this vibrant city so unique. Situated near the banks of the Piscataqua River just minutes away from Strawbery Banke Museum, Prescott Park, USS Albacore Museum, Market Square and more!",
+      "Experience the ultimate location in Portsmouth! This beautifully furnished, spacious, and private home is perfect for exploring the city’s iconic sights and historic attractions. Nestled near the banks of the Piscataqua River, you’ll be just minutes from must-see spots like Strawbery Banke Museum, Prescott Park, the USS Albacore Museum, Market Square, and much more! This home offers both comfort and proximity to the vibrant charm of Portsmouth.",
     address: "3747 Parkway Street, Apple Valley, CA, 92307",
     guestCapacity: 3,
     numOfBeds: 2,
@@ -119,7 +119,7 @@ export const rooms = [
     name: "Shangri-La Hotel, Washington",
     pricePerNight: 105,
     description:
-      "Our largest room with a queen bed and foldable sofa. Comfortably fits 2-3 adults, four adults maximum. Decorated with Irish-themed colors and arts. It has a private bathroom with a shower, equipped with smart TV, mini-fridge, desk, chairs. Enjoy City views at the sitting area by the window. Located on the 3rd floor with no elevator.",
+      "Our spacious room is designed for relaxation and comfort. It features a luxurious queen bed along with a foldable sofa, ideal for 2-3 adults, with a maximum capacity of four. The room is elegantly decorated with sophisticated touches and comes with a private bathroom with a shower. Additional amenities include a smart TV, mini-fridge, desk, and seating area by the window, offering serene city views. Please note that the room is located on the upper floor, accessible by stairs only.",
     address: "4724  Mudlick Road, Yakima, WA, 98902",
     guestCapacity: 2,
     numOfBeds: 1,
@@ -147,7 +147,7 @@ export const rooms = [
     name: "Hotel Chimayo de Santa Fe Rooms",
     pricePerNight: 36,
     description:
-      "Our largest room with a queen bed and foldable sofa. Comfortably fits 2-3 adults, four adults maximum. Decorated with Irish-themed colors and arts. It has a private bathroom with a shower, equipped with smart TV, mini-fridge, desk, chairs. Enjoy City views at the sitting area by the window. Located on the 3rd floor with no elevator.",
+      "The rooms reflect the rich cultural heritage of New Mexico with authentic Southwestern décor. Each room is designed with handcrafted wood furnishings, traditional Chimayo textiles, and local artwork that add to the rustic charm. Many rooms feature cozy fireplaces, private balconies, and spacious seating areas that create a welcoming, warm ambiance. Modern amenities such as flat-screen TVs, complimentary Wi-Fi, and luxurious bedding ensure comfort. Guests can enjoy views of the charming courtyard or the historic surroundings of downtown Santa Fe, while the central location makes it easy to explore local attractions.",
     address: "1029  Godfrey Street, Portland, OR, 97205",
     guestCapacity: 2,
     numOfBeds: 2,
@@ -168,10 +168,10 @@ export const rooms = [
     reviews: [],
   },
   {
-    name: "Hotel Garni Ischgl 4 star room comfort",
+    name: "Parrish Avenue Hotel",
     pricePerNight: 82,
     description:
-      "Our largest room with a queen bed and foldable sofa. Comfortably fits 2-3 adults, four adults maximum. Decorated with Irish-themed colors and arts. It has a private bathroom with a shower, equipped with smart TV, mini-fridge, desk, chairs. Enjoy City views at the sitting area by the window. Located on the 3rd floor with no elevator.",
+      "Our Comfort Room is designed for relaxation and convenience, offering a comfortable double bed, modern furnishings, and a serene ambiance for a restful stay. Guests can enjoy a spacious, well-appointed bathroom with either a walk-in shower or bathtub, and amenities such as a flat-screen TV, mini-fridge, safe, and complimentary Wi-Fi. The room’s decor blends contemporary touches with warm, inviting tones, ensuring a peaceful retreat after exploring the vibrant city of Saint Louis.",
     address: "2645  Parrish Avenue, SAINT LOUIS, MO, 63116",
     guestCapacity: 5,
     numOfBeds: 3,

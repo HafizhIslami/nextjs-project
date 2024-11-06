@@ -114,15 +114,21 @@ export const resetPassword = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { token: string } }) => {
     const body = await req.json();
 
-        const resetPasswordToken = crypto
-    .createHash("sha256")
-    .update(params.token)
-    .digest("hex");
-    
-    const user = await User.findOne({ resetPasswordToken,resetPasswordExpire:{$gt:Date.now()} });
+    const resetPasswordToken = crypto
+      .createHash("sha256")
+      .update(params.token)
+      .digest("hex");
+
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
 
     if (!user) {
-      throw new ErrorHandler("Password reset token is invalid or has been expired", 404);
+      throw new ErrorHandler(
+        "Password reset token is invalid or has been expired",
+        404
+      );
     }
 
     if (body.password !== body.confirmPassword) {
@@ -133,8 +139,73 @@ export const resetPassword = catchAsyncErrors(
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
 
-    await user.save()
-    
+    await user.save();
+
+    return NextResponse.json({
+      success: true,
+    });
+  }
+);
+
+// Get all users  =>  /api/admin/users
+export const allAdminUsers = catchAsyncErrors(async (req: NextRequest) => {
+  const users = await User.find();
+
+  return NextResponse.json({
+    users,
+  });
+});
+
+// Get user details  =>  /api/admin/users/:id
+export const getUserDetails = catchAsyncErrors(
+  async (req: NextRequest, { params }: { params: { id: string } }) => {
+    const user = await User.findById(params.id);
+
+    if (!user) {
+      throw new ErrorHandler("User not found with this ID", 404);
+    }
+
+    return NextResponse.json({
+      user,
+    });
+  }
+);
+
+// Update user details  =>  /api/admin/users/:id
+export const updateUser = catchAsyncErrors(
+  async (req: NextRequest, { params }: { params: { id: string } }) => {
+    const body = await req.json();
+
+    const newUserData = {
+      name: body.name,
+      email: body.email,
+      role: body.role,
+    };
+
+    const user = await User.findByIdAndUpdate(params.id, newUserData);
+
+    return NextResponse.json({
+      user,
+    });
+  }
+);
+
+// Delete user  =>  /api/admin/users/:id
+export const deleteUser = catchAsyncErrors(
+  async (req: NextRequest, { params }: { params: { id: string } }) => {
+    const user = await User.findById(params.id);
+
+    if (!user) {
+      throw new ErrorHandler("User not found with this ID", 404);
+    }
+
+    // Remove avatar from cloudinary
+    if (user?.avatar?.public_id) {
+      await delete_file(user?.avatar?.public_id);
+    }
+
+    await user.deleteOne();
+
     return NextResponse.json({
       success: true,
     });

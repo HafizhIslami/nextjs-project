@@ -1,4 +1,6 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, Schema, ObjectId } from "mongoose";
+import { IUser } from "./user";
+import geoCoder from "../utils/geoCoder";
 
 export interface IImage extends Document {
   public_id: string;
@@ -6,16 +8,13 @@ export interface IImage extends Document {
 }
 
 export interface IReview extends Document {
-  user: mongoose.Schema.Types.ObjectId;
+  user: IUser;
   rating: number;
   comment: string;
 }
 
 export interface ILocation {
-  type: {
-    type: string;
-    enum: ["point"];
-  };
+  type: string;
   coordinates: number[];
   formattedAddress: string;
   city: string;
@@ -42,11 +41,11 @@ export interface IRoom extends Document {
   images: IImage[];
   category: string;
   reviews: IReview[];
-  user: mongoose.Schema.Types.ObjectId;
+  user: IUser;
   createdAt: Date;
 }
 
-const roomSchema: Schema<IRoom> = new Schema({
+const roomSchema: Schema<IRoom> = new mongoose.Schema({
   name: {
     type: String,
     required: [true, "Please enter room name"],
@@ -164,6 +163,21 @@ const roomSchema: Schema<IRoom> = new Schema({
     type: Date,
     default: Date.now,
   },
+});
+
+roomSchema.pre("save", async function (next) {
+  const loc = await geoCoder.geocode(this.address);
+  // console.log("location", loc);
+
+  this.location = {
+    type: "Point",
+    coordinates: [loc[0].longitude, loc[0].latitude],
+    formattedAddress: loc[0].formattedAddress,
+    city: loc[0].city,
+    state: loc[0].stateCode,
+    zipcode: loc[0].zipcode,
+    country: loc[0].countryCode,
+  };
 });
 
 export default mongoose.models.Room ||

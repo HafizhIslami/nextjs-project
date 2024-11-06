@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config({path:'./.local.env'});
+dotenv.config({ path: "./.local.env" });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -22,8 +22,12 @@ const nextConfig = {
     SMTP_FROM_EMAIL: process.env.SMTP_FROM_EMAIL,
     SMTP_FROM_NAME: process.env.SMTP_FROM_NAME,
 
+    MAPBOX_ACCESS_TOKEN: process.env.MAPBOX_ACCESS_TOKEN,
     GEOCODER_PROVIDER: process.env.GEOCODER_PROVIDER,
     GEOCODER_API_KEY: process.env.GEOCODER_API_KEY,
+    STRIPE_PUBLISH_KEY: process.env.STRIPE_PUBLISH_KEY,
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
   },
   images: {
     domains: ["res.cloudinary.com"],

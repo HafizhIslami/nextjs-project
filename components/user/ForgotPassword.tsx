@@ -13,7 +13,7 @@ const ForgotPassword = () => {
 
   useEffect(() => {
     if (error && "data" in error) {
-      toast.error(error?.data?.errMessage);
+      toast.error((error.data as { errMessage: string })?.errMessage);
     }
 
     if (isSuccess) {

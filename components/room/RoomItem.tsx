@@ -9,7 +9,7 @@ interface Props {
 }
 const RoomItem = ({ room }: Props) => {
   return (
-    <div className="col-sm-12 col-md-6 col-lg-3 my-3 d-flex">
+    <div className="col-sm-12 col-md-6 col-lg-4 px-4 my-3 d-flex">
       <div className="card p-2 w-100">
         <img
           className="card-img-top mx-auto"
@@ -35,7 +35,7 @@ const RoomItem = ({ room }: Props) => {
             <div>
               <StarRating
                 rating={room.ratings}
-                starRatedColor="green"
+                starRatedColor="orange"
                 numberOfStars={5}
                 starDimension="18px"
                 name="rating"

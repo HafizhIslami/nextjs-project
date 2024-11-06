@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useResetPasswordMutation } from "@/redux/api/authApi";
 import { useRouter } from "next/navigation";
@@ -21,7 +21,7 @@ const NewPassword = ({ token }: Props) => {
 
   useEffect(() => {
     if (error && "data" in error) {
-      toast.error(error?.data?.errMessage);
+      toast.error((error.data as { errMessage: string })?.errMessage);
     }
 
     if (isSuccess) {

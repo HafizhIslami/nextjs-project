@@ -7,6 +7,7 @@ import Script from "next/script";
 import { GlobalProvider } from "./GlobalProvider";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import Head from "./head";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <Head />
       <body className={inter.className}>
         <GlobalProvider>
           <Header />
@@ -29,7 +31,7 @@ export default function RootLayout({
           <Footer />
         </GlobalProvider>
         <Script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></Script>
-        <Script src="https://kit.fontawesome.com/9edb65c86a.js"></Script>
+        <Script src="https://kit.fontawesome.com/de9bf0351c.js" ></Script>
       </body>
     </html>
   );
