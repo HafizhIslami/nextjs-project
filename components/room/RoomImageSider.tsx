@@ -7,28 +7,36 @@ interface Props {
 }
 const RoomImageSlider = ({ images }: Props) => {
   return (
-    <Carousel>
+    <Carousel fade data-bs-theme="dark">
       {images.length > 0 ? (
         images.map((image) => (
           <Carousel.Item key={image.public_id}>
-            <div style={{ widows: "100%", height: "460px" }}>
+            <div
+              style={{
+                height: "460px",
+              }}
+              className="carousel-content d-flex justify-content-center align-items-center"
+            >
               <Image
-                className="d-block m-auto"
+                className="d-block m-auto h-100"
                 src={image?.url}
                 alt={image?.url}
-                layout="fill"
               />
             </div>
           </Carousel.Item>
         ))
       ) : (
         <Carousel.Item>
-          <div style={{ widows: "100%", height: "460px" }}>
+          <div
+            style={{
+              height: "460px",
+              alignContent: "center",
+            }}
+          >
             <Image
-              className="d-block m-auto"
-              src={`./images/default_room_image.jpg`}
+              className="d-block m-auto w-100"
+              src={`/public/images/default_room_image.jpg`}
               alt="images/default_room_image.jpg"
-              layout="fill"
             />
           </div>
         </Carousel.Item>

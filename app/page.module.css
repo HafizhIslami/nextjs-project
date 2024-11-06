@@ -108,6 +108,10 @@
 .logo {
   position: relative;
 }
+
+.modal-img{
+  
+}
 /* Enable hover only on non-touch devices */
 @media (hover: hover) and (pointer: fine) {
   .card:hover {
@@ -128,6 +132,14 @@
 
 /* Mobile */
 @media (max-width: 700px) {
+  .carousel-content {
+    height: 360px;
+  }
+
+  .booking-sidebar {
+    order: 1;
+  }
+
   .content {
     padding: 4rem;
   }

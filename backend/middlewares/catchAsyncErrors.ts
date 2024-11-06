@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-type HandlerFunction = (req: NextRequest, params: any) => Promise<Response>;
+type HandlerFunction = (req: NextRequest, params: any) => Promise<NextResponse>;
 
 interface IValidation {
   message: string;

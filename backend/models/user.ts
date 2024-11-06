@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
+import * as crypto from "crypto";
 
 export interface IUser extends Document {
   name: string;
@@ -18,7 +18,7 @@ export interface IUser extends Document {
   getResetPasswordToken(): string;
 }
 
-const userSchema: Schema<IUser> = new Schema({
+const userSchema: Schema<IUser> = new mongoose.Schema({
   name: {
     type: String,
     required: [true, "Please enter your name"],

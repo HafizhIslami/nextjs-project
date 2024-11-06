@@ -6,3 +6,10 @@ export const calculateDayOfStay = (checkInDate: Date, checkOutDate: Date) => {
 
   return endDate.diff(startDate, "days");
 };
+
+export const addCommasToAmount = (amount: string = "0") => {
+  return Number(amount).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 3,
+  });
+};

@@ -9,13 +9,15 @@ interface Props {
   };
 }
 
-const getRooms = async (id: string) => {
-  const res = await fetch(`${process.env.API_URL}/api/rooms/${id}`);
+const getRoom = async (id: string) => {
+  const res = await fetch(`${process.env.API_URL}/api/rooms/${id}`, {
+    cache: "no-cache",
+  });
   return res.json();
 };
 
 export default async function RoomDetailsPage({ params }: Props) {
-  const data = await getRooms(params?.id);
+  const data = await getRoom(params?.id);
 
   if (data?.message) {
     <Error error={data} />;
@@ -23,10 +25,10 @@ export default async function RoomDetailsPage({ params }: Props) {
   return <RoomDetails data={data} />;
 }
 
-export async function generateMetadata({params}:Props){
-  const data = await getRooms(params.id);
+export async function generateMetadata({ params }: Props) {
+  const data = await getRoom(params.id);
 
   return {
     title: data?.room?.title,
-  }
+  };
 }

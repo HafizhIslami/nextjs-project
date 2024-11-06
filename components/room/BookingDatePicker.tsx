@@ -3,10 +3,14 @@ import { calculateDayOfStay } from "@/helpers/helpers";
 import {
   useGetBookedDatesQuery,
   useLazyCheckBookingAvailabilityQuery,
+  useLazyStripeCheckoutQuery,
   useNewBookingMutation,
 } from "@/redux/api/bookingApi";
+import { useAppSelector } from "@/redux/hooks";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import toast from "react-hot-toast";
 
 interface Props {
@@ -18,23 +22,19 @@ const BookingDatePicker = ({ room }: Props) => {
   const [daysOfStay, setDaysOfStay] = useState(0);
   const [dateSelected, setDateSelected] = useState(false);
 
-  const [newBooking, { isLoading, error }] = useNewBookingMutation();
+  const [newBooking] = useNewBookingMutation();
   const [checkBookingAvailability, { data }] =
     useLazyCheckBookingAvailabilityQuery();
+
+  const router = useRouter();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
 
   const isAvailable = data?.isAvailable;
 
   const { data: { bookedDates: dates } = {} } = useGetBookedDatesQuery(
     room._id
   );
-  console.log("dates",dates);
   const excludeDates = dates?.map((date: string) => new Date(date)) || [];
-
-  useEffect(() => {
-    if (error && "data" in error) {
-      toast.error(error?.data?.errMessage);
-    }
-  }, [error]);
 
   const onChangeHandler = (dates: Date[]) => {
     const [checkInDate, checkOutDate] = dates;
@@ -57,21 +57,49 @@ const BookingDatePicker = ({ room }: Props) => {
     }
   };
 
-  const bookRoom = () => {
-    const bookingData = {
-      room: room._id,
-      checkInDate,
-      checkOutDate,
-      daysOfStay,
-      amountPaid: daysOfStay * room.pricePerNight,
-      paymentInfo: {
-        id: "STRIPE_ID",
-        status: "PAID",
-      },
-    };
+  const [stripeCheckout, { error, isLoading, data: checkoutData }] =
+    useLazyStripeCheckoutQuery();
 
-    newBooking(bookingData);
+  useEffect(() => {
+    if (error && "data" in error) {
+      toast.error((error.data as { errMessage: string })?.errMessage);
+    }
+
+    if (checkoutData) {
+      console.log("checkoutData.url ==== ", checkoutData.url);
+      router.replace(checkoutData?.url);
+    }
+  }, [error, checkoutData]);
+
+  const bookRoom = () => {
+    const amount = room?.pricePerNight * daysOfStay;
+
+    const checkoutData = {
+      checkInDate: checkInDate.toISOString(),
+      checkOutDate: checkOutDate.toISOString(),
+      daysOfStay,
+      amount,
+    };
+    console.log("checkoutData ==== ", checkoutData);
+
+    stripeCheckout({ id: room?._id, checkoutData });
   };
+
+  // const bookRoom = () => {
+  //   const bookingData = {
+  //     room: room._id,
+  //     checkInDate,
+  //     checkOutDate,
+  //     daysOfStay,
+  //     amountPaid: daysOfStay * room.pricePerNight,
+  //     paymentInfo: {
+  //       id: "STRIPE_ID",
+  //       status: "PAID",
+  //     },
+  //   };
+
+  //   newBooking(bookingData);
+  // };
 
   return (
     <div className="booking-card shadow p-4">
@@ -100,9 +128,20 @@ const BookingDatePicker = ({ room }: Props) => {
           Room is not available. Please select another dates.
         </p>
       )}
-      <button className="btn py-3 form-btn p-4" onClick={bookRoom}>
-        {isLoading ? "Loading..." : "Book Now"}
-      </button>
+
+      {isAvailable &&
+        (isAuthenticated ? (
+          <button
+            className="btn py-3 form-btn w-100"
+            onClick={bookRoom}
+            disabled={isLoading}
+            hidden={!dateSelected}
+          >
+            Pay - ${daysOfStay * room?.pricePerNight}
+          </button>
+        ) : (
+          <div className="alert alert-danger my-3">Login to book room</div>
+        ))}
     </div>
   );
 };

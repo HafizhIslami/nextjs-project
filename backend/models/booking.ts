@@ -1,8 +1,10 @@
 import mongoose, { Document, Schema } from "mongoose";
+import { IUser } from "./user";
+import { IRoom } from "./room";
 
 export interface IBooking extends Document {
-  room: mongoose.Schema.Types.ObjectId;
-  user: mongoose.Schema.Types.ObjectId;
+  room: IRoom;
+  user: IUser;
   checkInDate: Date;
   checkOutDate: Date;
   amountPaid: Number;
@@ -18,10 +20,12 @@ export interface IBooking extends Document {
 const bookingSchema: Schema<IBooking> = new mongoose.Schema({
   room: {
     type: mongoose.Schema.Types.ObjectId,
+    required: true,
     ref: "Room",
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
+    required: true,
     ref: "User",
   },
   checkInDate: {
@@ -61,4 +65,4 @@ const bookingSchema: Schema<IBooking> = new mongoose.Schema({
 });
 
 export default mongoose.models.Booking ||
-  mongoose.model("Booking", bookingSchema);
+  mongoose.model<IBooking>("Booking", bookingSchema);

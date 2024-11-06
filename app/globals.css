@@ -48,7 +48,7 @@ body {
   width: 13px;
   height: 13px;
   border-radius: 50%;
-  background: #e61e4d;
+  background: #ff799a;
   animation-timing-function: cubic-bezier(0, 1, 1, 0);
 }
 .lds-ellipsis div:nth-child(1) {
@@ -116,7 +116,7 @@ body {
   width: 80px;
   height: 80px;
   margin: 110px auto 0;
-  border: solid 6px #e61e4d;
+  border: solid 6px #ff799a;
   border-radius: 50%;
   border-right-color: transparent;
   border-bottom-color: transparent;
@@ -183,8 +183,8 @@ body {
 }
 
 .form-btn {
-  background-color: #e61e4d;
-  border-color: #e61e4d;
+  background-color: #ff799a;
+  border-color: #ff799a;
   color: white;
   margin-top: 2.5rem;
   font-weight: bold;
@@ -197,8 +197,8 @@ body {
 }
 
 .form-btn:hover {
-  background-color: #bb2d3b;
-  border-color: #bb2d3b;
+  background-color: #ff4b78;
+  border-color: #ff4b78;
   color: white;
 }
 
@@ -236,7 +236,7 @@ body {
 
 /* Navbar */
 nav {
-  background-color: white;
+  background-color: #fdc0cf;
   padding: 1rem 1rem;
   -webkit-box-shadow: 0 4px 6px -6px #222;
   -moz-box-shadow: 0 4px 6px -6px #222;
@@ -244,7 +244,7 @@ nav {
 }
 
 .login-header-btn {
-  background-color: #e61e4d;
+  background-color: #ff799a;
 }
 
 .login-header-btn a {
@@ -259,12 +259,12 @@ nav {
 
 .back-to-search {
   font-size: 1.1rem;
-  color: #e61e4d;
+  color: #ff799a;
   font-weight: 600;
 }
 
 .back-to-search:hover {
-  color: #e61e4d;
+  color: #ff4b78;
 }
 
 .card {
@@ -279,7 +279,7 @@ nav {
 }
 
 .card-title a:hover {
-  color: #e61e4d;
+  color: #ff799a;
   text-decoration: none;
 }
 
@@ -294,13 +294,13 @@ nav {
 }
 
 .card-body .view-btn {
-  background-color: #e61e4d;
+  background-color: #ff799a;
   color: white;
   text-decoration: none;
 }
 
 .card-body .view-btn:hover {
-  background-color: #e61e4d;
+  background-color: #ff4b78;
   color: white;
 }
 
@@ -310,7 +310,7 @@ nav {
 
 .ratings {
   font-size: 1.2rem;
-  color: #e61e4d;
+  color: #ff799a;
 }
 
 .no-of-reviews {
@@ -323,7 +323,7 @@ nav {
 
 .booking-card .booking-btn:hover {
   color: white;
-  background-color: #e61e4d;
+  background-color: #ff799a;
 }
 
 .price-per-night {
@@ -368,9 +368,9 @@ footer {
 
 /* Pagination */
 .page-item.active .page-link {
-  background-color: #e61e4d;
-  border-color: #e61e4d;
-  color: #fff;
+  background-color: #ffffff;
+  border-color: #ff799a;
+  color: #ff799a;
 }
 
 .page-item.active .page-link:hover {
@@ -379,11 +379,11 @@ footer {
 }
 
 .pagination .page-link {
-  color: #e61e4d;
+  color: #ff799a;
 }
 
 .pagination .page-link:hover {
-  color: #e61e4d;
+  color: #ff4b78;
 }
 
 /* Booking Details */
@@ -414,5 +414,11 @@ footer {
   background-color: #f3f4f6;
   border-color: #f3f4f6;
   border-radius: 0.3rem;
-  color: #e61e4d;
+  color: pink;
 }
+
+/* 
+icon color : #A12710
+background color : #fdc0cf
+darker background color : #ff799a
+*/

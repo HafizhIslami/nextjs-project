@@ -3,8 +3,10 @@
 import { setIsAuthenticated, setUser } from "@/redux/features/userSlice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { signOut, useSession } from "next-auth/react";
+import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect } from "react";
+import roomiLogo from "../../public/images/roomi_header_small.png";
 
 const Header = () => {
   const dispatch = useAppDispatch();
@@ -28,16 +30,17 @@ const Header = () => {
         <div className="col-6 col-lg-3 p-0">
           <div className="navbar-brand">
             <a href="/">
-              <img
+              <Image
                 style={{ cursor: "pointer" }}
-                src="images/bookit_logo.png"
-                alt="BookIT"
+                src={roomiLogo}
+                alt="Roomi"
+                width={190}
               />
             </a>
           </div>
         </div>
 
-        <div className="col-6 col-lg-3 mt-3 mt-md-0 text-end">
+        <div className="col-6 col-lg-3 text-end align-content-center">
           {user ? (
             <div className="ml-4 dropdown d-line">
               <button
@@ -62,7 +65,7 @@ const Header = () => {
                 </figure>
                 <span className="placeholder-glow ps-1">
                   {" "}
-                  {user?.name?.replace(/\b(\w)/g, (s:any) => s.toUpperCase())}
+                  {user?.name?.replace(/\b(\w)/g, (s: any) => s.toUpperCase())}
                 </span>
               </button>
 
@@ -70,9 +73,11 @@ const Header = () => {
                 className="dropdown-menu w-100"
                 aria-labelledby="dropdownMenuButton1"
               >
-                <Link href="/admin/dashboard" className="dropdown-item">
-                  Dashboard
-                </Link>
+                {user.role === "admin" && (
+                  <Link href="/admin/dashboard" className="dropdown-item">
+                    Dashboard
+                  </Link>
+                )}
                 <Link href="/bookings/me" className="dropdown-item">
                   My Bookings
                 </Link>
