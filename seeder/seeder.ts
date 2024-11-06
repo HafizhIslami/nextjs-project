@@ -10,6 +10,7 @@ const seedRooms = async () => {
       DB_URI = process.env.DB_URI!;
     } else DB_URI = process.env.DB_LOCAL_URI!;
 
+    console.log(`process running in ${process.env.NODE_ENV} mode`);
     await mongoose.connect(DB_URI);
 
     await Room.deleteMany();

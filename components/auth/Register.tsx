@@ -12,6 +12,7 @@ import toast from "react-hot-toast";
 import ButtonLoader from "../layout/ButtonLoader";
 import { registerUser } from "@/actions/actions";
 import SubmitButton from "../form/SubmitButton";
+import { CustomError } from "@/interfaces/customError";
 
 const Register = () => {
   const [user, setUser] = useState({
@@ -28,7 +29,8 @@ const Register = () => {
 
   useEffect(() => {
     if (error && "data" in error) {
-      toast.error((error.data as { errMessage: string })?.errMessage);
+      const customError = error.data as CustomError;
+      toast.error(customError.errMessage);
     }
 
     if (isSuccess) {
@@ -54,7 +56,7 @@ const Register = () => {
 
   const submitHandler = async (formData: FormData) => {
     const res = await registerUser(formData);
-
+    console.log(res);
     if (res?.error) return toast.error(res?.error);
 
     if (res?.isCreated) {
