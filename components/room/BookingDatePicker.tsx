@@ -140,7 +140,12 @@ const BookingDatePicker = ({ room }: Props) => {
             Pay - ${daysOfStay * room?.pricePerNight}
           </button>
         ) : (
-          <div className="alert alert-danger my-3">Login to book room</div>
+          <div className="alert alert-danger my-3 d-flex align-items-center justify-content-between">
+            Login to book room
+            <a className="btn form-btn mt-0 d-block d-lg-none" href="/login">
+              Login
+            </a>
+          </div>
         ))}
     </div>
   );
