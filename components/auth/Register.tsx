@@ -57,6 +57,7 @@ const Register = () => {
   const submitHandler = async (formData: FormData) => {
     console.log(formData);
     const res = await registerUser(formData);
+    console.log("res",res);
     if (res?.error) return toast.error(res?.error);
 
     if (res?.isCreated) {
