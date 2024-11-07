@@ -51,7 +51,6 @@ const UploadAvatar = () => {
 
     const userData = { avatar };
     uploadAvatar(userData);
-    console.log("pass");
   };
 
   const changeHandler: React.ChangeEventHandler<HTMLInputElement> = (e) => {

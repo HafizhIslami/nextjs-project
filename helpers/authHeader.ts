@@ -10,7 +10,6 @@ export const getAuthHeader = () => {
   const cookieName = getAuthCookieName();
   
   const nextAuthSessionToken = nextCookies.get(cookieName);
-  console.log(nextAuthSessionToken);
 
   return {
     headers: {

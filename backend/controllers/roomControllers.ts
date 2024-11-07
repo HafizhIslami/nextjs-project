@@ -11,7 +11,6 @@ import { delete_file, upload_file } from "../utils/cloudinary";
 export const allRooms = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { entries: string } }) => {
     const resPerPage: number = /*Number(params.entries) ||*/ 6;
-    console.log("resPerPage", resPerPage);
     const queryStr: any = {};
     const { searchParams } = new URL(req.url);
 

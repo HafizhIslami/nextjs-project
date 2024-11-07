@@ -66,7 +66,6 @@ const BookingDatePicker = ({ room }: Props) => {
     }
 
     if (checkoutData) {
-      console.log("checkoutData.url ==== ", checkoutData.url);
       router.replace(checkoutData?.url);
     }
   }, [error, checkoutData]);
@@ -80,7 +79,6 @@ const BookingDatePicker = ({ room }: Props) => {
       daysOfStay,
       amount,
     };
-    console.log("checkoutData ==== ", checkoutData);
 
     stripeCheckout({ id: room?._id, checkoutData });
   };
