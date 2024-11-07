@@ -11,6 +11,11 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [showPassword, setShowPassword] = useState(false);
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   const router = useRouter();
   const submitHandler = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -50,17 +55,31 @@ const Login = () => {
               />
             </div>
 
-            <div className="mb-3">
+            <div className="mb-3" style={{ position: "relative" }}>
               <label className="form-label" htmlFor="password_field">
-                {" "}
-                Password{" "}
+                Password
               </label>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password_field"
                 className="form-control"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                style={{ paddingRight: "2.5rem" }} // Space for the eye icon
+              />
+              <i
+                onClick={togglePasswordVisibility}
+                className={`${
+                  showPassword ? "fa-solid fa-eye-slash" : "fa-solid fa-eye"
+                } fa-fw`}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "75%",
+                  transform: "translateY(-50%)",
+                  cursor: "pointer",
+                  color: "#888",
+                }}
               />
             </div>
 
