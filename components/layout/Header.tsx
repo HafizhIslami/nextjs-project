@@ -104,7 +104,7 @@ const Header = () => {
               {data === null && (
                 <Link
                   href={"/login"}
-                  className="btn btn-danger px-4 text-white login-header-btn float-right"
+                  className="btn form-btn mt-0 px-4 text-white login-header-btn float-right"
                 >
                   Login
                 </Link>

@@ -8,7 +8,6 @@ export const isAuthenticatedUser = async (
   next: any
 ) => {
   const session = await getToken({ req });
-  console.log("session =>>", session);
   if (!session) {
     return NextResponse.json(
       { message: "Login first to access this route" },

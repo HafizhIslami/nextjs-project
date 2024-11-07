@@ -21,6 +21,11 @@ const Register = () => {
     password: "",
   });
 
+  const [showPassword, setShowPassword] = useState(false);
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   const router = useRouter();
 
   const { name, email, password } = user;
@@ -101,21 +106,34 @@ const Register = () => {
             />
           </div>
 
-          <div className="mb-3">
-            <label className="form-label" htmlFor="password_field">
-              {" "}
-              Password{" "}
-            </label>
-            <input
-              type="password"
-              id="password_field"
-              className="form-control"
-              name="password"
-              value={password}
-              onChange={onChange}
-              disabled={isLoading}
-            />
-          </div>
+          <div className="mb-3" style={{ position: "relative" }}>
+              <label className="form-label" htmlFor="password_field">
+                Password
+              </label>
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password_field"
+                className="form-control"
+                name="password"
+                value={password}
+                onChange={onChange}
+                style={{ paddingRight: "2.5rem" }} // Space for the eye icon
+              />
+              <i
+                onClick={togglePasswordVisibility}
+                className={`${
+                  showPassword ? "fa-solid fa-eye-slash" : "fa-solid fa-eye"
+                } fa-fw`}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "75%",
+                  transform: "translateY(-50%)",
+                  cursor: "pointer",
+                  color: "#888",
+                }}
+              />
+            </div>
 
           {/* <SubmitButton text="Register" className="btn form-btn w-100 py-2" /> */}
           <button type="submit" className="btn form-btn w-100 py-2">
@@ -128,3 +146,4 @@ const Register = () => {
 };
 
 export default Register;
+

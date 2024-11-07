@@ -66,7 +66,6 @@ const BookingDatePicker = ({ room }: Props) => {
     }
 
     if (checkoutData) {
-      console.log("checkoutData.url ==== ", checkoutData.url);
       router.replace(checkoutData?.url);
     }
   }, [error, checkoutData]);
@@ -80,7 +79,6 @@ const BookingDatePicker = ({ room }: Props) => {
       daysOfStay,
       amount,
     };
-    console.log("checkoutData ==== ", checkoutData);
 
     stripeCheckout({ id: room?._id, checkoutData });
   };
@@ -140,7 +138,12 @@ const BookingDatePicker = ({ room }: Props) => {
             Pay - ${daysOfStay * room?.pricePerNight}
           </button>
         ) : (
-          <div className="alert alert-danger my-3">Login to book room</div>
+          <div className="alert alert-danger my-3 d-flex align-items-center justify-content-between">
+            Login to book room
+            <a className="btn form-btn mt-0 d-block d-lg-none" href="/login">
+              Login
+            </a>
+          </div>
         ))}
     </div>
   );

@@ -33,7 +33,7 @@ const Dashboard = () => {
       endDate: endDate.toISOString(),
     });
   };
-  console.log(data);
+  
   return (
     <div className="ps-4 my-5">
       <div className="d-flex justify-content-start align-items-center">

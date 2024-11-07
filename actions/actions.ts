@@ -25,7 +25,6 @@ export async function registerUser(formData: FormData) {
     const password = formData.get("password");
 
     const userData = { name, email, password };
-    console.log("userData", userData);
     const data = await User.create(userData);
 
     if (data?._id) return { isCreated: true };

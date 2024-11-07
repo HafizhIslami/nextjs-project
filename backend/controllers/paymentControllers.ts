@@ -92,7 +92,7 @@ export const webhookCheckout = async (req: NextRequest) => {
       // console.log("session => ", session);
     }
   } catch (error: any) {
-    console.log("Error in stripe checkout webhook => ", error);
+    // console.log("Error in stripe checkout webhook => ", error);
     return NextResponse.json({ errMessage: error?.message });
   }
 };
