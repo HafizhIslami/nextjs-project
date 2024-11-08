@@ -11,10 +11,15 @@ const UpdatePassword = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const [updatePassword, { isLoading, isSuccess, error }] =
     useUpdatePasswordMutation();
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   useEffect(() => {
     if (error && "data" in error) {
@@ -45,18 +50,32 @@ const UpdatePassword = () => {
         <form className="shadow rounded bg-body" onSubmit={submitHandler}>
           <h2 className="mb-4">Change Password</h2>
 
-          <div className="mb-3">
+          <div className="mb-3" style={{ position: "relative" }}>
             <label className="form-label" htmlFor="old_password_field">
               Old Password
             </label>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               id="old_password_field"
               className="form-control"
               name="oldPassword"
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
               required
+            />
+            <i
+              onClick={togglePasswordVisibility}
+              className={`${
+                showPassword ? "fa-solid fa-eye-slash" : "fa-solid fa-eye"
+              } fa-fw`}
+              style={{
+                position: "absolute",
+                right: "10px",
+                top: "75%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+                color: "#888",
+              }}
             />
           </div>
 
