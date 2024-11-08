@@ -9,6 +9,7 @@ import {
 import { useAppSelector } from "@/redux/hooks";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Button, Modal } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import toast from "react-hot-toast";
@@ -21,6 +22,8 @@ const BookingDatePicker = ({ room }: Props) => {
   const [checkOutDate, setCheckOutDate] = useState(new Date());
   const [daysOfStay, setDaysOfStay] = useState(0);
   const [dateSelected, setDateSelected] = useState(false);
+
+  const [show, setShow] = useState(false);
 
   const [newBooking] = useNewBookingMutation();
   const [checkBookingAvailability, { data }] =
@@ -70,6 +73,10 @@ const BookingDatePicker = ({ room }: Props) => {
     }
   }, [error, checkoutData]);
 
+  const paymentInstructionHandler = () => {
+    setShow(true);
+  };
+
   const bookRoom = () => {
     const amount = room?.pricePerNight * daysOfStay;
 
@@ -80,6 +87,7 @@ const BookingDatePicker = ({ room }: Props) => {
       amount,
     };
 
+    setShow(false);
     stripeCheckout({ id: room?._id, checkoutData });
   };
 
@@ -131,7 +139,7 @@ const BookingDatePicker = ({ room }: Props) => {
         (isAuthenticated ? (
           <button
             className="btn py-3 form-btn w-100"
-            onClick={bookRoom}
+            onClick={paymentInstructionHandler}
             disabled={isLoading}
             hidden={!dateSelected}
           >
@@ -145,6 +153,30 @@ const BookingDatePicker = ({ room }: Props) => {
             </a>
           </div>
         ))}
+
+      <Modal show={show} onHide={bookRoom} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Payment Instructions</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>
+            For this testing payment mode, please follow this instruction:
+            <br />
+            <strong>Card Number:</strong> 4242 4242 4242 4242
+            <br />
+            <strong>Valid Thru:</strong> 12/34
+            <br />
+            <strong>CVC:</strong> 3 random number
+          </p>
+          <span />
+          <p>Thanks !</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={bookRoom}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
