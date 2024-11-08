@@ -20,7 +20,8 @@
 }
 
 #logo img {
-  width: 180px;
+  height: auto;
+  width: 320px;
 }
 
 .order-invoice h1 {
@@ -32,7 +33,7 @@
   font-weight: normal;
   text-align: center;
   margin: 0 0 20px 0;
-  background: url(../../public/images/dimension.png);
+  background: url(/public/images/roomi_logo.png);
 }
 
 #project {

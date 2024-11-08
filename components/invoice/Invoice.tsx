@@ -23,7 +23,9 @@ const Invoice = ({ data }: Props) => {
 
         const pdf = new jsPDF();
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        pdf.addImage(imgData, 0, 0, pdfWidth, 0);
+        const margin = (pdfWidth * 0.1) / 2;
+
+        pdf.addImage(imgData, margin, margin, pdfWidth * 0.9, 0);
         pdf.save(`invoice_${booking?._id}.pdf`);
       });
     }
@@ -40,20 +42,35 @@ const Invoice = ({ data }: Props) => {
           </button>
         </div>
         <div className="px-5">
-          <div id="booking_invoice" className="px-4 border border-secondary">
+          <div
+            id="booking_invoice"
+            className="px-4 border border-secondary"
+            style={{
+              backgroundImage: `url("/public/images/roomi_logo.png")`,
+              backgroundSize: "contain",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "center",
+              padding: "20px", // Optional for spacing around the invoice content
+            }}
+          >
             <header className="clearfix">
-              <div id="logo" className="my-4">
-                <Image src={roomiLogo} alt='Roomi Logo'/>
+              <div id="logo" className="mb-4">
+                <Image
+                  src={roomiLogo}
+                  alt="Roomi Logo"
+                  height={80}
+                  width={1500}
+                />
               </div>
-              <h1>INVOICE # {(booking?._id as string)}</h1>
+              <h1>INVOICE # {booking?._id as string}</h1>
               <div id="company" className="clearfix">
-                <div>BookIT</div>
+                <div>Roomi</div>
                 <div>
-                  455 Foggy Heights,
+                  233 S Wacker Dr,
                   <br />
-                  AZ 85004, US
+                  Chicago, IL 60606
                 </div>
-                <div>(602) 519-0450</div>
+                <div>(602) 654-3210</div>
                 <div>
                   <a href="mailto:info@roomi.com">info@roomi.com</a>
                 </div>
