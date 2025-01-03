@@ -5,20 +5,27 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import roomiLogo from "../../public/images/roomi_header_small.png";
+import { usePathname } from "next/navigation";
 
 const Header = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { data } = useSession();
+  const pathName = usePathname();
+  const [currentPage, setCurrentPage] = useState(false);
 
   useEffect(() => {
     if (data) {
       dispatch(setUser(data?.user));
       dispatch(setIsAuthenticated(true));
     }
-  }, [data]);
+    console.log(pathName);
+    if (pathName === "/login") {
+      setCurrentPage(true);
+    } else setCurrentPage(false);
+  }, [data, pathName]);
 
   const logoutHandler = () => {
     signOut();
@@ -103,8 +110,9 @@ const Header = () => {
               )}
               {data === null && (
                 <Link
-                  href={"/login"}
-                  className="btn form-btn mt-0 px-4 text-white login-header-btn float-right"
+                  href="/login"
+                  className="btn form-btn mt-0 px-4 login-header-btn float-right"
+                  hidden={currentPage}
                 >
                   Login
                 </Link>
