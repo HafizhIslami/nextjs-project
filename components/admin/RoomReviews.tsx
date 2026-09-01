@@ -6,7 +6,7 @@ import {
   useDeleteReviewMutation,
   useLazyGetRoomReviewsQuery,
 } from "@/redux/api/roomApi";
-import { MDBDataTable } from "mdbreact";
+import SimpleDataTable from "./SimpleDataTable";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -75,7 +75,7 @@ const RoomReviews = () => {
             <button
               className="btn btn-outline-danger mx-2"
               disabled={isLoading}
-              onClick={() => deleteReviewHandler(review?._id as string)}
+              onClick={() => deleteReviewHandler(review?._id?.toString() ?? "")}
             >
               <i className="fa fa-trash"></i>
             </button>
@@ -116,13 +116,7 @@ const RoomReviews = () => {
       </div>
 
       {reviews?.length > 0 ? (
-        <MDBDataTable
-          data={setReviews()}
-          className="px-3"
-          bordered
-          striped
-          hover
-        />
+        <SimpleDataTable data={setReviews()} className="px-3" />
       ) : (
         <h5 className="mt-5 text-center">No Reviews</h5>
       )}

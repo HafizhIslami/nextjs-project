@@ -62,7 +62,7 @@ const Invoice = ({ data }: Props) => {
                   width={1500}
                 />
               </div>
-              <h1>INVOICE # {booking?._id as string}</h1>
+              <h1>INVOICE # {booking?._id?.toString()}</h1>
               <div id="company" className="clearfix">
                 <div>Roomi</div>
                 <div>

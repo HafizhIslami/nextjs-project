@@ -2,7 +2,7 @@
 
 import { IBooking } from "@/backend/models/booking";
 import { useDeleteBookingMutation } from "@/redux/api/bookingApi";
-import { MDBDataTable } from "mdbreact";
+import SimpleDataTable from "./SimpleDataTable";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
@@ -80,7 +80,9 @@ const AllBookings = ({ data }: Props) => {
             <button
               className="btn btn-outline-danger m-1 col-auto"
               disabled={isLoading}
-              onClick={() => deleteBookingHandler(booking?._id as string)}
+              onClick={() =>
+                deleteBookingHandler(booking?._id?.toString() ?? "")
+              }
             >
               <i className="fa fa-trash"></i>
             </button>
@@ -99,14 +101,7 @@ const AllBookings = ({ data }: Props) => {
   return (
     <div className="container">
       <h1 className="my-5">{bookings?.length} Bookings</h1>
-      <MDBDataTable
-        data={setBookings()}
-        className="px-3"
-        bordered
-        striped
-        hover
-        noBottomColumns
-      />
+      <SimpleDataTable data={setBookings()} className="px-3" />
     </div>
   );
 };
