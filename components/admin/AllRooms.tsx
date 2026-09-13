@@ -2,7 +2,7 @@
 
 import { IRoom } from "@/backend/models/room";
 import { useDeleteRoomMutation } from "@/redux/api/roomApi";
-import { MDBDataTable } from "mdbreact";
+import SimpleDataTable from "./SimpleDataTable";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
@@ -75,7 +75,7 @@ const AllRooms = ({ data }: Props) => {
             </Link>
             <button
               className="btn btn-outline-danger m-1 col-auto"
-              onClick={() => deleteRoomHandler(room?._id as string)}
+              onClick={() => deleteRoomHandler(room?._id?.toString() ?? "")}
             >
               {" "}
               <i className="fa fa-trash"></i>{" "}
@@ -104,14 +104,7 @@ const AllRooms = ({ data }: Props) => {
         </Link>
       </h1>
 
-      <MDBDataTable
-        data={setRooms()}
-        className="px-3"
-        bordered
-        striped
-        hover
-        noBottomColumns
-      />
+      <SimpleDataTable data={setRooms()} className="px-3" />
     </div>
   );
 };

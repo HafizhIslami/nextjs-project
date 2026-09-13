@@ -1,5 +1,6 @@
 import Home from "@/components/Home";
-import Error from "./error";
+import ErrorPage from "./error";
+import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -7,29 +8,66 @@ export const metadata = {
   title: "HomePage - Roomi",
 };
 
-const getRooms = async (searchParams: string) => {
-  const urlParams = new URLSearchParams(searchParams);
+type SearchParams = Record<string, string | string[] | undefined>;
+
+const getBaseUrl = () => {
+  const requestHeaders = headers();
+  const host = requestHeaders.get("host");
+
+  if (process.env.NODE_ENV === "development" && host) {
+    const protocol = requestHeaders.get("x-forwarded-proto") ?? "http";
+    return `${protocol}://${host}`;
+  }
+
+  return process.env.API_URL;
+};
+
+const getRooms = async (searchParams: SearchParams = {}) => {
+  const urlParams = new URLSearchParams();
+
+  Object.entries(searchParams).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => urlParams.append(key, item));
+    } else if (value) {
+      urlParams.set(key, value);
+    }
+  });
+
   const queryString = urlParams.toString();
+
   try {
-    const res = await fetch(`${process.env.API_URL}/api/rooms?${queryString}`, {
+    const baseUrl = getBaseUrl();
+
+    if (!baseUrl) {
+      throw new Error("API_URL is not configured.");
+    }
+
+    const res = await fetch(`${baseUrl}/api/rooms?${queryString}`, {
       cache: "no-cache",
     });
-    const data = res.json();
-    return data;
+
+    const contentType = res.headers.get("content-type") ?? "";
+    if (!contentType.includes("application/json")) {
+      throw new Error(`Expected JSON from /api/rooms, received ${contentType}`);
+    }
+
+    return await res.json();
   } catch (error) {
-    console.log("error =>", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return { success: false, errMessage: message };
   }
 };
 
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: string;
+  searchParams: SearchParams;
 }) {
   const data = await getRooms(searchParams);
 
   if (data?.errMessage) {
-    <Error error={data} />;
+    return <ErrorPage error={data} />;
   }
+
   return <Home data={data} />;
 }

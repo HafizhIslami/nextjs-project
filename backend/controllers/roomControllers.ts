@@ -14,6 +14,9 @@ export const allRooms = catchAsyncErrors(
     const queryStr: any = {};
     const { searchParams } = new URL(req.url);
 
+console.log("req.url : ", req.url );
+console.log("searchParams : ", searchParams );
+
     searchParams.forEach((val, key) => {
       queryStr[key] = val;
     });
@@ -243,9 +246,10 @@ export const deleteRoomReview = catchAsyncErrors(async (req: NextRequest) => {
 
   const room = await Room.findById(roomId);
 
-  const reviews = room.reviews.filter(
-    (review: IReview) => (review?._id as string).toString() !== reviewId
-  );
+  const reviews = room.reviews.filter((review: IReview) => {
+    const id = review._id?.toString();
+    return id !== reviewId;
+  });
   const numOfReviews = reviews.length;
 
   const ratings =
