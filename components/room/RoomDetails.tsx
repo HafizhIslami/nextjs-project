@@ -29,14 +29,13 @@ const RoomDetails = ({ data }: Props) => {
         zoom: 12,
       });
 
-      new mapboxgl.Marker().setLngLat(coordinates).addTo(map)
+      new mapboxgl.Marker().setLngLat(coordinates).addTo(map);
     };
 
     setMap();
   }, []);
 
   const { room } = data;
-
   return (
     <div className="container container-fluid">
       <h2 className="mt-5">{room.name}</h2>
