@@ -6,13 +6,15 @@ import { delete_file, upload_file } from "../utils/cloudinary";
 import { resetPasswordHTMLTemplate } from "../utils/emailTemplates";
 import sendEmail from "../utils/sendEmail";
 import crypto from "crypto";
+import dbConnect from "../config/dbConnect";
 
 export const registerUser = catchAsyncErrors(async (req: NextRequest) => {
+  await dbConnect({ throwOnError: true });
   const body = await req.json();
 
   const { name, email, password } = body;
 
-  const user = await User.create({
+  await User.create({
     name,
     email,
     password,
@@ -24,6 +26,7 @@ export const registerUser = catchAsyncErrors(async (req: NextRequest) => {
 });
 
 export const updateProfile = catchAsyncErrors(async (req: NextRequest) => {
+  await dbConnect({ throwOnError: true });
   const body = await req.json();
 
   const userData = {
@@ -39,6 +42,7 @@ export const updateProfile = catchAsyncErrors(async (req: NextRequest) => {
 });
 
 export const updatePassword = catchAsyncErrors(async (req: NextRequest) => {
+  await dbConnect({ throwOnError: true });
   const body = await req.json();
 
   const user = await User.findById(req?.user?._id).select("+password");
@@ -57,6 +61,7 @@ export const updatePassword = catchAsyncErrors(async (req: NextRequest) => {
 });
 
 export const uploadAvatar = catchAsyncErrors(async (req: NextRequest) => {
+  await dbConnect({ throwOnError: true });
   const body = await req.json();
 
   const avatarResponse = await upload_file(body?.avatar, "bookit/avatars");
@@ -65,7 +70,7 @@ export const uploadAvatar = catchAsyncErrors(async (req: NextRequest) => {
     await delete_file(req?.user?.avatar?.public_id);
   }
 
-  const user = await User.findByIdAndUpdate(req?.user?._id, {
+  await User.findByIdAndUpdate(req?.user?._id, {
     avatar: avatarResponse,
   });
 
@@ -75,6 +80,7 @@ export const uploadAvatar = catchAsyncErrors(async (req: NextRequest) => {
 });
 
 export const forgotPassword = catchAsyncErrors(async (req: NextRequest) => {
+  await dbConnect({ throwOnError: true });
   const body = await req.json();
 
   const user = await User.findOne({ email: body.email });
@@ -97,12 +103,15 @@ export const forgotPassword = catchAsyncErrors(async (req: NextRequest) => {
       subject: "Bookit Password Recovery",
       message,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
 
     await user.save();
-    throw new ErrorHandler(error.message, 500);
+    throw new ErrorHandler(
+      error instanceof Error ? error.message : "Unable to send password recovery email",
+      500
+    );
   }
 
   return NextResponse.json({
@@ -112,6 +121,7 @@ export const forgotPassword = catchAsyncErrors(async (req: NextRequest) => {
 
 export const resetPassword = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { token: string } }) => {
+    await dbConnect({ throwOnError: true });
     const body = await req.json();
 
     const resetPasswordToken = crypto
@@ -148,8 +158,9 @@ export const resetPassword = catchAsyncErrors(
 );
 
 // Get all users  =>  /api/admin/users
-export const allAdminUsers = catchAsyncErrors(async (req: NextRequest) => {
-  const users = await User.find();
+export const allAdminUsers = catchAsyncErrors(async () => {
+  await dbConnect({ throwOnError: true });
+  const users = await User.find().lean().exec();
 
   return NextResponse.json({
     users,
@@ -159,7 +170,8 @@ export const allAdminUsers = catchAsyncErrors(async (req: NextRequest) => {
 // Get user details  =>  /api/admin/users/:id
 export const getUserDetails = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
-    const user = await User.findById(params.id);
+    await dbConnect({ throwOnError: true });
+    const user = await User.findById(params.id).lean().exec();
 
     if (!user) {
       throw new ErrorHandler("User not found with this ID", 404);
@@ -174,6 +186,7 @@ export const getUserDetails = catchAsyncErrors(
 // Update user details  =>  /api/admin/users/:id
 export const updateUser = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
+    await dbConnect({ throwOnError: true });
     const body = await req.json();
 
     const newUserData = {
@@ -193,6 +206,7 @@ export const updateUser = catchAsyncErrors(
 // Delete user  =>  /api/admin/users/:id
 export const deleteUser = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
+    await dbConnect({ throwOnError: true });
     const user = await User.findById(params.id);
 
     if (!user) {

@@ -1,37 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
 
-type HandlerFunction = (req: NextRequest, params: any) => Promise<NextResponse>;
+type HandlerFunction<TParams> = (
+  req: NextRequest,
+  params: TParams
+) => Promise<NextResponse>;
 
 interface IValidation {
   message: string;
 }
 
-export const catchAsyncErrors =
-  (handler: HandlerFunction) => async (req: NextRequest, params: any) => {
+type ErrorDetails = {
+  name?: string;
+  path?: string;
+  code?: number;
+  keyValue?: Record<string, unknown>;
+  status?: number;
+  statusCode?: number;
+  message?: string | string[];
+  errors?: Record<string, IValidation>;
+};
+
+export const catchAsyncErrors = <TParams>(
+  handler: HandlerFunction<TParams>
+) => async (req: NextRequest, params: TParams): Promise<NextResponse> => {
     try {
       return await handler(req, params);
-    } catch (error: any) {
-      if (error?.name === "CastError") {
-        error.message = `Resource not found. Invalid ${error?.path}`;
-        error.status = 404;
+    } catch (error: unknown) {
+      const details = (
+        error && typeof error === "object" ? error : {}
+      ) as ErrorDetails;
+      let status = details.statusCode ?? details.status ?? 500;
+      let message: string | string[] = details.message || "Internal server error";
+
+      if (details.name === "CastError") {
+        message = `Resource not found. Invalid ${details.path}`;
+        status = 404;
       }
 
-      if (error?.name === "ValidationError") {
-        error.message = Object.values<IValidation>(error?.errors).map(
-          (val: any) => val.message
+      if (details.name === "ValidationError") {
+        message = Object.values<IValidation>(details.errors ?? {}).map(
+          (val) => val.message
         );
-        error.status = 400;
+        status = 400;
       }
 
       // mongoose duplicate key error handler
-      if(error.code === 11000){
-        error.message = `Duplicate ${Object.keys(error.keyValue)} entered`;
-        error.status = 400;
+      if (details.code === 11000) {
+        message = `Duplicate ${Object.keys(details.keyValue ?? {})} entered`;
+        status = 400;
       }
       
       return NextResponse.json(
-        { errMessage: error.message },
-        { status: error.status || 500 }
+        { success: false, error: message, errMessage: message },
+        { status }
       );
     }
   };

@@ -9,5 +9,6 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         return NextResponse.json({ message: "Login first to access this route" }, { status: 401 });
     }
     request.user = session.user as IUser;
-    return uploadAvatar(request, {});
+    return await uploadAvatar(request, {});
 }
+export const dynamic = "force-dynamic";

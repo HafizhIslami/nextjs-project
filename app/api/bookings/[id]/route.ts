@@ -15,5 +15,6 @@ export async function GET(request: NextRequest, ctx: RequestContext): Promise<Ne
         return NextResponse.json({ message: "Login first to access this route" }, { status: 401 });
     }
     request.user = session.user as IUser;
-    return getBookingDetails(request, ctx);
+    return await getBookingDetails(request, ctx);
 }
+export const dynamic = "force-dynamic";

@@ -19,5 +19,6 @@ export async function DELETE(
   }
 
   request.user = session.user as IUser;
-  return deleteBooking(request, ctx);
+  return await deleteBooking(request, ctx);
 }
+export const dynamic = "force-dynamic";

@@ -13,5 +13,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   request.user = session.user as IUser;
-  return createRoomReview(request, {});
+  return await createRoomReview(request, {});
 }
+export const dynamic = "force-dynamic";
