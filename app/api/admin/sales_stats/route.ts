@@ -23,5 +23,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   request.user = user;
-  return getSalesStats(request, {});
+  return await getSalesStats(request, {});
 }
+export const dynamic = "force-dynamic";

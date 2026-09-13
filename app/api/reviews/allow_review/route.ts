@@ -13,5 +13,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   request.user = session.user as IUser;
-  return getAllowReview(request, {});
+  return await getAllowReview(request, {});
 }
+export const dynamic = "force-dynamic";

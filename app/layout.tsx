@@ -7,7 +7,6 @@ import { GlobalProvider } from "./GlobalProvider";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Head from "./head";
-import dbConnect from "@/backend/config/dbConnect";
 
 export const metadata: Metadata = {
   title: "Roomi",
@@ -19,8 +18,6 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await dbConnect({ throwOnError: true });
-
   return (
     <html lang="en">
       <Head />

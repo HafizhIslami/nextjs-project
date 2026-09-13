@@ -1,50 +1,16 @@
-// import mongoose from "mongoose";
-
-// type DbConnectOptions = {
-//   throwOnError?: boolean;
-// };
-
-// declare global {
-//   // eslint-disable-next-line no-var
-//   var mongoosePromise: Promise<typeof mongoose> | undefined;
-// }
-
-// const dbConnect = async (options: DbConnectOptions = {}) => {
-//   if (mongoose.connection.readyState >= 1) {
-//     return;
-//   }
-
-//   const DB_URI = process.env.DB_URI || process.env.DB_LOCAL_URI;
-//   console.log("DB_URI:", DB_URI);
-//   if (!DB_URI) {
-//     const error = new Error("Database connection string (DATABASE_URI/DB_URI) is missing in .env");
-//     if (options.throwOnError) {
-//       throw error;
-//     }
-//     return;
-//   }
-
-//   if (!global.mongoosePromise) {
-//     global.mongoosePromise = mongoose.connect(DB_URI);
-//   }
-
-//   await global.mongoosePromise;
-//   console.log("DB Connected successfully to:", DB_URI.split("@")[1] || "Localhost");
-// };
-
-// export default dbConnect;
 import mongoose from "mongoose";
 
-type DbConnectOptions = {
+export type DbConnectOptions = {
   throwOnError?: boolean;
 };
 
+type MongooseCache = {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+};
+
 declare global {
-  // eslint-disable-next-line no-var
-  var mongooseCache: {
-    conn: typeof mongoose | null;
-    promise: Promise<typeof mongoose> | null;
-  };
+  var mongooseCache: MongooseCache | undefined;
 }
 
 let cached = global.mongooseCache;
@@ -53,10 +19,16 @@ if (!cached) {
   cached = global.mongooseCache = { conn: null, promise: null };
 }
 
-const dbConnect = async (options: DbConnectOptions = {}) => {
-  // 1. Jika sudah ada koneksi aktif, langsung return
-  if (mongoose.connection.readyState >= 1 && cached.conn) {
+const dbConnect = async (
+  options: DbConnectOptions = {}
+): Promise<typeof mongoose | undefined> => {
+  if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
+  }
+
+  // Do not reuse a connection object after the driver has disconnected.
+  if (mongoose.connection.readyState === 0) {
+    cached.conn = null;
   }
 
   const DB_URI = process.env.DB_URI || process.env.DB_LOCAL_URI;
@@ -72,39 +44,41 @@ const dbConnect = async (options: DbConnectOptions = {}) => {
     return;
   }
 
-  // 2. Jika belum ada promise koneksi (atau promise sebelumnya error), buat koneksi baru
   if (!cached.promise) {
-    const opts = {
-      bufferCommands: false, // Menghindari query menggantung di serverless
-      serverSelectionTimeoutMS: 5000, // Timeout dalam 5 detik jika IP terblokir
-    };
-
-    cached.promise = mongoose
-      .connect(DB_URI, opts)
-      .then((mongooseInstance) => {
-        console.log(
-          "DB Connected successfully to:",
-          DB_URI.split("@")[1] || "Localhost"
-        );
-        return mongooseInstance;
-      })
-      .catch((err) => {
-        cached.promise = null; // Reset promise jika gagal
-        console.error("Failed to connect to DB:", err.message);
-        throw err; // Lempar error agar tipe Promise tetap valid
-      });
+    cached.promise = mongoose.connect(DB_URI, {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 5000,
+    }).then((mongooseInstance) => {
+      console.log(
+        "DB Connected successfully to:",
+        DB_URI.split("@")[1] || "Localhost"
+      );
+      return mongooseInstance;
+    }).catch((error: unknown) => {
+      // A rejected promise must not be cached across warm invocations.
+      cached.promise = null;
+      cached.conn = null;
+      throw error;
+    });
   }
 
   try {
     cached.conn = await cached.promise;
-  } catch (e) {
+    return cached.conn;
+  } catch (error: unknown) {
     cached.promise = null;
-    if (options.throwOnError) {
-      throw e;
-    }
-  }
+    cached.conn = null;
 
-  return cached.conn;
+    if (options.throwOnError) {
+      throw error;
+    }
+
+    console.error(
+      "Failed to connect to DB:",
+      error instanceof Error ? error.message : error
+    );
+    return undefined;
+  }
 };
 
 export default dbConnect;

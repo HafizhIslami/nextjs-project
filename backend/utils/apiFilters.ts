@@ -1,12 +1,14 @@
-class APIFilters {
-  query: any;
-  queryStr: any;
+import { Document, Query } from "mongoose";
 
-  constructor(query: any, queryStr: any) {
+class APIFilters<T extends Document> {
+  query: Query<T[], T>;
+  queryStr: Record<string, string>;
+
+  constructor(query: Query<T[], T>, queryStr: Record<string, string>) {
     this.query = query;
     this.queryStr = queryStr;
   }
-  search(): APIFilters {
+  search(): APIFilters<T> {
     const location = this.queryStr?.location
       ? {
           address: {
@@ -20,7 +22,7 @@ class APIFilters {
     return this;
   }
 
-  filter(): APIFilters {
+  filter(): APIFilters<T> {
     const queryCopy = { ...this.queryStr };
 
     const removeFields = ["location", "page"];
@@ -31,7 +33,7 @@ class APIFilters {
     return this;
   }
 
-  pagination(resPerPage: number): APIFilters {
+  pagination(resPerPage: number): APIFilters<T> {
     const currentPage = Number(this.queryStr?.page) || 1;
     const skip = resPerPage * (currentPage - 1);
 

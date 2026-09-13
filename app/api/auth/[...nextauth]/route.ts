@@ -16,6 +16,7 @@ type Token = {
 };
 
 async function auth(req: NextRequest, res: any) {
+  await dbConnect({ throwOnError: true });
   return await NextAuth(req, res, {
     session: {
       strategy: "jwt",
@@ -24,8 +25,9 @@ async function auth(req: NextRequest, res: any) {
       CredentialsProvider({
         // @ts-ignore
         async authorize(credentials: Credentials) {
-                    const { email, password } = credentials;
-          const user = await User.findOne({ email }).select("+password");
+          await dbConnect({ throwOnError: true });
+          const { email, password } = credentials;
+          const user = await User.findOne({ email }).select("+password").exec();
 
           if (!user) {
             throw new Error("Invalid email or password");
@@ -44,17 +46,21 @@ async function auth(req: NextRequest, res: any) {
     callbacks: {
       jwt: async ({ token, user }) => {
         const jwtToken = token as Token;
-        user && (token.user = user);
+        if (user) {
+          token.user = user;
+        }
 
         if (req.url?.includes("/api/auth/session?update")) {
-          const updatedUser = await User.findById(jwtToken?.user?._id);
+          const updatedUser = await User.findById(jwtToken?.user?._id).lean().exec();
           token.user = updatedUser;
         }
 
         return token;
       },
       session: async ({ session, token }) => {
-        token && (session.user = token.user as IUser);
+        if (token) {
+          session.user = token.user as IUser;
+        }
 
         // @ts-ignore
         delete session?.user?.password;
@@ -71,3 +77,4 @@ async function auth(req: NextRequest, res: any) {
 }
 
 export { auth as GET, auth as POST };
+export const dynamic = "force-dynamic";

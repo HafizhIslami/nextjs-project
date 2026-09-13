@@ -19,12 +19,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const auth = await authenticate(request);
     if (auth instanceof NextResponse) return auth;
     request.user = auth;
-    return getAllRoomAdmin(request, {});
+    return await getAllRoomAdmin(request, {});
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
     const auth = await authenticate(request);
     if (auth instanceof NextResponse) return auth;
     request.user = auth;
-    return newRoom(request, {});
+    return await newRoom(request, {});
 }
+export const dynamic = "force-dynamic";
