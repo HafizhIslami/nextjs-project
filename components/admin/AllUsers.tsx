@@ -2,7 +2,7 @@
 
 import { IUser } from "@/backend/models/user";
 import { useDeleteUserMutation } from "@/redux/api/userApi";
-import { MDBDataTable } from "mdbreact";
+import SimpleDataTable from "./SimpleDataTable";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
@@ -83,7 +83,7 @@ const AllUsers = ({ data }: Props) => {
             <button
               className="btn btn-outline-danger m-1 col-auto"
               disabled={isLoading}
-              onClick={() => deleteUserHandler(user?._id as string)}
+              onClick={() => deleteUserHandler(user?._id?.toString() ?? "")}
             >
               <i className="fa fa-trash"></i>
             </button>
@@ -102,14 +102,7 @@ const AllUsers = ({ data }: Props) => {
   return (
     <div className="container">
       <h1 className="my-5">{users?.length} User(s)</h1>
-      <MDBDataTable
-        data={setUsers()}
-        className="px-3"
-        bordered
-        striped
-        hover
-        noBottomColumns
-      />
+      <SimpleDataTable data={setUsers()} className="px-3" />
     </div>
   );
 };

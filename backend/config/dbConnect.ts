@@ -1,17 +1,35 @@
 import mongoose from "mongoose";
 
-const dbConnect = async () => {
+type DbConnectOptions = {
+  throwOnError?: boolean;
+};
+
+declare global {
+  // eslint-disable-next-line no-var
+  var mongoosePromise: Promise<typeof mongoose> | undefined;
+}
+
+const dbConnect = async (options: DbConnectOptions = {}) => {
   if (mongoose.connection.readyState >= 1) {
     return;
   }
 
-  let DB_URI = "";
+  const DB_URI = process.env.DB_URI || process.env.DB_LOCAL_URI;
+  console.log("DB_URI:", DB_URI);
+  if (!DB_URI) {
+    const error = new Error("Database connection string (DATABASE_URI/DB_URI) is missing in .env");
+    if (options.throwOnError) {
+      throw error;
+    }
+    return;
+  }
 
-  if (process.env.NODE_ENV === "production") {
-    DB_URI = process.env.DB_URI!;
-  } else DB_URI = process.env.DB_LOCAL_URI!;
+  if (!global.mongoosePromise) {
+    global.mongoosePromise = mongoose.connect(DB_URI);
+  }
 
-  await mongoose.connect(DB_URI); // use this to check connection success or not .then((con) => console.log("DB Connected"));
+  await global.mongoosePromise;
+  console.log("DB Connected successfully to:", DB_URI.split("@")[1] || "Localhost");
 };
 
 export default dbConnect;

@@ -1,20 +1,13 @@
-import dbConnect from "@/backend/config/dbConnect";
 import { newBooking } from "@/backend/controllers/bookingControllers";
-import { isAuthenticatedUser } from "@/backend/middlewares/auth";
-import { createEdgeRouter } from "next-connect";
+import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
+import { IUser } from "@/backend/models/user";
 
-interface RequestContext {}
-
-const router = createEdgeRouter<NextRequest, RequestContext>();
-
-dbConnect();
-
-router.use(isAuthenticatedUser).post(newBooking);
-
-export async function POST(
-  request: NextRequest,
-  ctx: RequestContext
-): Promise<NextResponse> {
-  return router.run(request, ctx) as Promise<NextResponse>;
+export async function POST(request: NextRequest): Promise<NextResponse> {
+    const session = await getToken({ req: request });
+    if (!session) {
+        return NextResponse.json({ message: "Login first to access this route" }, { status: 401 });
+    }
+    request.user = session.user as IUser;
+    return newBooking(request, {});
 }

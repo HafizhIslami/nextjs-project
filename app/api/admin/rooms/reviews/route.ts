@@ -1,37 +1,32 @@
-import dbConnect from "@/backend/config/dbConnect";
-import {
-  deleteRoomReview,
-  getRoomReviews,
-} from "@/backend/controllers/roomControllers";
-import {
-  authorizeRoles,
-  isAuthenticatedUser,
-} from "@/backend/middlewares/auth";
-import { createEdgeRouter } from "next-connect";
-import { NextResponse } from "next/server";
-import { NextRequest } from "next/server";
+import { deleteRoomReview, getRoomReviews } from "@/backend/controllers/roomControllers";
+import { getToken } from "next-auth/jwt";
+import { NextRequest, NextResponse } from "next/server";
+import { IUser } from "@/backend/models/user";
 
-interface RequestContext {}
+async function authenticate(request: NextRequest): Promise<IUser | NextResponse> {
+    const session = await getToken({ req: request });
+    if (!session) {
+        return NextResponse.json({ message: "Login first to access this route" }, { status: 401 });
+    }
 
-const router = createEdgeRouter<NextRequest, RequestContext>();
+    const user = session.user as IUser;
+    if (user.role !== "admin") {
+        return NextResponse.json({ errMessage: `Role (${user.role} is not allowed to access this resource.)` }, { status: 403 });
+    }
 
-dbConnect();
-
-router.use(isAuthenticatedUser, authorizeRoles("admin")).get(getRoomReviews);
-router
-  .use(isAuthenticatedUser, authorizeRoles("admin"))
-  .delete(deleteRoomReview);
-
-export async function GET(
-  request: NextRequest,
-  ctx: RequestContext
-): Promise<NextResponse> {
-  return router.run(request, ctx) as Promise<NextResponse>;
+    return user;
 }
 
-export async function DELETE(
-  request: NextRequest,
-  ctx: RequestContext
-): Promise<NextResponse> {
-  return router.run(request, ctx) as Promise<NextResponse>;
+export async function GET(request: NextRequest): Promise<NextResponse> {
+    const auth = await authenticate(request);
+    if (auth instanceof NextResponse) return auth;
+    request.user = auth;
+    return getRoomReviews(request, {});
+}
+
+export async function DELETE(request: NextRequest): Promise<NextResponse> {
+    const auth = await authenticate(request);
+    if (auth instanceof NextResponse) return auth;
+    request.user = auth;
+    return deleteRoomReview(request, {});
 }

@@ -7,6 +7,7 @@ const seedRooms = async () => {
     let DB_URI = "";
 
     if (process.env.NODE_ENV === "production") {
+      console.log("DB_URI : ", process.env.DB_URI);
       DB_URI = process.env.DB_URI!;
     } else DB_URI = process.env.DB_LOCAL_URI!;
 

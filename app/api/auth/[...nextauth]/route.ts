@@ -24,9 +24,7 @@ async function auth(req: NextRequest, res: any) {
       CredentialsProvider({
         // @ts-ignore
         async authorize(credentials: Credentials) {
-          dbConnect();
-
-          const { email, password } = credentials;
+                    const { email, password } = credentials;
           const user = await User.findOne({ email }).select("+password");
 
           if (!user) {

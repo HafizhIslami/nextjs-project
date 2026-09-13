@@ -1,7 +1,7 @@
 "use client";
 
 import { IBooking } from "@/backend/models/booking";
-import { MDBDataTable } from "mdbreact";
+import SimpleDataTable from "@/components/admin/SimpleDataTable";
 import Link from "next/link";
 import React from "react";
 
@@ -76,13 +76,9 @@ const MyBookings = ({ data }: Props) => {
   return (
     <div className="container">
       <h1 className="my-5">My Bookings</h1>
-      <MDBDataTable
+      <SimpleDataTable
         data={setBookings()}
         className="px-3"
-        bordered
-        striped
-        hover
-        noBottomColumns
       />
     </div>
   );

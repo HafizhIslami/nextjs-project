@@ -1,24 +1,13 @@
-import dbConnect from "@/backend/config/dbConnect";
-import {
-  updatePassword,
-  updateProfile,
-} from "@/backend/controllers/authControllers";
-import { isAuthenticatedUser } from "@/backend/middlewares/auth";
-import { createEdgeRouter } from "next-connect";
-import { NextResponse } from "next/server";
-import { NextRequest } from "next/server";
+import { updatePassword } from "@/backend/controllers/authControllers";
+import { getToken } from "next-auth/jwt";
+import { NextRequest, NextResponse } from "next/server";
+import { IUser } from "@/backend/models/user";
 
-interface RequestContext {}
-
-const router = createEdgeRouter<NextRequest, RequestContext>();
-
-dbConnect();
-
-router.use(isAuthenticatedUser).put(updatePassword);
-
-export async function PUT(
-  request: NextRequest,
-  ctx: RequestContext
-): Promise<NextResponse> {
-  return router.run(request, ctx) as Promise<NextResponse>;
+export async function PUT(request: NextRequest): Promise<NextResponse> {
+    const session = await getToken({ req: request });
+    if (!session) {
+        return NextResponse.json({ message: "Login first to access this route" }, { status: 401 });
+    }
+    request.user = session.user as IUser;
+    return updatePassword(request, {});
 }

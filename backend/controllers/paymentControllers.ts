@@ -91,6 +91,8 @@ export const webhookCheckout = async (req: NextRequest) => {
       return NextResponse.json({ success: true });
       // console.log("session => ", session);
     }
+
+    return NextResponse.json({ success: false });
   } catch (error: any) {
     // console.log("Error in stripe checkout webhook => ", error);
     return NextResponse.json({ errMessage: error?.message });
