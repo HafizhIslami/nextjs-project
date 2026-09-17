@@ -5,33 +5,15 @@ import Moment from "moment";
 import { extendMoment } from "moment-range";
 import ErrorHandler from "../utils/errorHandler";
 import dbConnect from "../config/dbConnect";
+import { requireDate, requireObjectId, parseStayDates } from "../utils/validation";
 
 const moment = extendMoment(Moment);
 // Create new room booking  => /api/
-export const newBooking = catchAsyncErrors(async (req: NextRequest) => {
-  await dbConnect({ throwOnError: true });
-  const body = await req.json();
-  const {
-    room,
-    checkInDate,
-    checkOutDate,
-    daysOfStay,
-    amountPaid,
-    paymentInfo,
-  } = body;
-
-  const booking = await Booking.create({
-    room,
-    checkInDate,
-    checkOutDate,
-    daysOfStay,
-    amountPaid,
-    paymentInfo,
-    user: req.user._id,
-    paidAt: Date.now(),
-  });
-
-  return NextResponse.json({ booking });
+export const newBooking = catchAsyncErrors(async () => {
+  throw new ErrorHandler(
+    "Direct booking is disabled. Complete payment through Stripe Checkout.",
+    410
+  );
 });
 
 // Check room availability  => /api/bookings/check
@@ -39,20 +21,17 @@ export const checkRoomBookingAvailability = catchAsyncErrors(
   async (req: NextRequest) => {
     await dbConnect({ throwOnError: true });
     const { searchParams } = new URL(req.url);
-    const roomId = searchParams.get("roomId");
-
-    const checkInDate: Date = new Date(
-      searchParams.get("checkInDate") as string
-    );
-    const checkOutDate: Date = new Date(
-      searchParams.get("checkOutDate") as string
+    const roomId = requireObjectId(searchParams.get("roomId"), "room ID");
+    const { checkInDate, checkOutDate } = parseStayDates(
+      searchParams.get("checkInDate"),
+      searchParams.get("checkOutDate")
     );
 
     const bookings = await Booking.find({
       room: roomId,
       $and: [
-        { checkInDate: { $lte: checkOutDate } },
-        { checkOutDate: { $gte: checkInDate } },
+        { checkInDate: { $lt: checkOutDate } },
+        { checkOutDate: { $gt: checkInDate } },
       ],
     }).select({ _id: 1 }).lean().exec();
 
@@ -66,7 +45,7 @@ export const checkRoomBookingAvailability = catchAsyncErrors(
 export const getRoomBookedDates = catchAsyncErrors(async (req: NextRequest) => {
   await dbConnect({ throwOnError: true });
   const { searchParams } = new URL(req.url);
-  const roomId = searchParams.get("roomId");
+  const roomId = requireObjectId(searchParams.get("roomId"), "room ID");
 
   const bookings = await Booking.find({ room: roomId })
     .select({ checkInDate: 1, checkOutDate: 1 })
@@ -98,6 +77,7 @@ export const myBookings = catchAsyncErrors(async (req: NextRequest) => {
 export const getBookingDetails = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
     await dbConnect({ throwOnError: true });
+    requireObjectId(params?.id, "booking ID");
     const booking = await Booking.findById(params.id)
       .populate("user room")
       .lean()
@@ -203,10 +183,14 @@ const getTopPerformingRooms = async (startDate: Date, endDate: Date) => {
 export const getSalesStats = catchAsyncErrors(async (req: NextRequest) => {
   await dbConnect({ throwOnError: true });
   const { searchParams } = new URL(req.url);
-  const startDate = new Date(searchParams.get("startDate") as string);
+  const startDate = requireDate(searchParams.get("startDate"), "start date");
   startDate.setHours(0, 0, 0, 0);
-  const endDate = new Date(searchParams.get("endDate") as string);
+  const endDate = requireDate(searchParams.get("endDate"), "end date");
   endDate.setHours(23, 59, 59, 999);
+
+  if (endDate < startDate) {
+    throw new ErrorHandler("End date must be after start date", 400);
+  }
 
   const [summary, sixMonthSalesData, topThreeRooms] = await Promise.all([
     Booking.aggregate([
@@ -248,6 +232,7 @@ export const allAdminBookings = catchAsyncErrors(async () => {
 export const deleteBooking = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
     await dbConnect({ throwOnError: true });
+    requireObjectId(params?.id, "booking ID");
     const booking = await Booking.findById(params.id);
 
     if (!booking) {

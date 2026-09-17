@@ -2,7 +2,7 @@
 
 import { IBooking } from "@/backend/models/booking";
 import { useDeleteBookingMutation } from "@/redux/api/bookingApi";
-import SimpleDataTable from "./SimpleDataTable";
+import SimpleDataTable, { DataTableData } from "./SimpleDataTable";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
@@ -31,10 +31,10 @@ const AllBookings = ({ data }: Props) => {
       router.refresh();
       toast.success("Booking deleted");
     }
-  }, [error, isSuccess]);
+  }, [error, isSuccess, router]);
 
   const setBookings = () => {
-    const data: { columns: any[]; rows: any[] } = {
+    const data: DataTableData = {
       columns: [
         {
           label: "ID",
@@ -58,33 +58,31 @@ const AllBookings = ({ data }: Props) => {
 
     bookings?.forEach((booking) => {
       data?.rows?.push({
-        id: booking._id,
+        id: booking._id?.toString(),
         checkin: new Date(booking?.checkInDate).toLocaleString("en-US"),
 
         actions: (
-          <div className="row justify-content-center">
+          <div className="table-actions">
             <Link
               href={`/bookings/${booking._id}`}
-              className="btn btn-outline-primary m-1 col-auto"
+              className="btn btn-outline-primary btn-sm"
             >
-              {" "}
-              <i className="fa fa-eye"></i>{" "}
+              View
             </Link>
             <Link
               href={`/bookings/invoice/${booking._id}`}
-              className="btn btn-outline-success m-1 col-auto"
+              className="btn btn-outline-success btn-sm"
             >
-              {" "}
-              <i className="fa fa-receipt"></i>{" "}
+              Invoice
             </Link>
             <button
-              className="btn btn-outline-danger m-1 col-auto"
+              className="btn btn-outline-danger btn-sm"
               disabled={isLoading}
               onClick={() =>
                 deleteBookingHandler(booking?._id?.toString() ?? "")
               }
             >
-              <i className="fa fa-trash"></i>
+              Delete
             </button>
           </div>
         ),
@@ -95,12 +93,14 @@ const AllBookings = ({ data }: Props) => {
   };
 
   const deleteBookingHandler = (id: string) => {
-    deleteBooking(id);
+    if (window.confirm("Delete this booking? This action cannot be undone.")) {
+      deleteBooking(id);
+    }
   };
 
   return (
     <div className="container">
-      <h1 className="my-5">{bookings?.length} Bookings</h1>
+      <h2 className="resource-title">{bookings?.length} Bookings</h2>
       <SimpleDataTable data={setBookings()} className="px-3" />
     </div>
   );

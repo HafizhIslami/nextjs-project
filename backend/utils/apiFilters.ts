@@ -12,7 +12,7 @@ class APIFilters<T extends Document> {
     const location = this.queryStr?.location
       ? {
           address: {
-            $regex: this.queryStr.location,
+            $regex: this.queryStr.location.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
             $options: "i",
           },
         }
@@ -23,10 +23,15 @@ class APIFilters<T extends Document> {
   }
 
   filter(): APIFilters<T> {
-    const queryCopy = { ...this.queryStr };
+    const queryCopy: Record<string, string | number> = {};
 
-    const removeFields = ["location", "page"];
-    removeFields.forEach((el) => delete queryCopy[el]);
+    if (["King", "Single", "Twins"].includes(this.queryStr.category)) {
+      queryCopy.category = this.queryStr.category;
+    }
+
+    if (/^\d+$/.test(this.queryStr.guests || "")) {
+      queryCopy.guestCapacity = Number(this.queryStr.guests);
+    }
 
     this.query = this.query.find(queryCopy);
 
@@ -34,7 +39,10 @@ class APIFilters<T extends Document> {
   }
 
   pagination(resPerPage: number): APIFilters<T> {
-    const currentPage = Number(this.queryStr?.page) || 1;
+    const parsedPage = Number(this.queryStr?.page);
+    const currentPage = Number.isSafeInteger(parsedPage) && parsedPage > 0
+      ? parsedPage
+      : 1;
     const skip = resPerPage * (currentPage - 1);
 
     this.query = this.query.limit(resPerPage).skip(skip);

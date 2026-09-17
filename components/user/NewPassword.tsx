@@ -28,10 +28,15 @@ const NewPassword = ({ token }: Props) => {
       toast.success("Password reset was successful");
       router.push("/login");
     }
-  }, [error, isSuccess]);
+  }, [error, isSuccess, router]);
 
   const submitHandler = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
 
     const passwords = { password, confirmPassword };
 
@@ -56,6 +61,9 @@ const NewPassword = ({ token }: Props) => {
               name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              minLength={6}
+              required
             />
           </div>
 
@@ -66,11 +74,20 @@ const NewPassword = ({ token }: Props) => {
             <input
               type="password"
               id="confirm_password_field"
-              className="form-control"
+              className={`form-control ${
+                confirmPassword && password !== confirmPassword ? "is-invalid" : ""
+              }`}
               name="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              autoComplete="new-password"
+              minLength={6}
+              aria-describedby="reset_password_feedback"
+              required
             />
+            <div className="invalid-feedback" id="reset_password_feedback">
+              Passwords must match.
+            </div>
           </div>
 
           <button

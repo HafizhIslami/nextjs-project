@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "HomePage - Roomi",
+  title: "Find a room",
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -69,5 +69,9 @@ export default async function HomePage({
     return <ErrorPage error={data} />;
   }
 
-  return <Home data={data} />;
+  const hasFilters = ["location", "category", "guests"].some(
+    (key) => searchParams[key] !== undefined
+  );
+
+  return <Home data={data} hasFilters={hasFilters} />;
 }

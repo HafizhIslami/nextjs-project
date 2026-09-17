@@ -1,96 +1,94 @@
 "use client";
 
 import { IRoom } from "@/backend/models/room";
-import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import React from "react";
 import RoomImageSlider from "./RoomImageSider";
 import RoomFeatures from "./RoomFeatures";
 import BookingDatePicker from "./BookingDatePicker";
 import NewReview from "../review/NewReview";
 import ListReviews from "../review/ListReviews";
-import StarRatings from "react-star-ratings";
-import mapboxgl from "mapbox-gl/dist/mapbox-gl.js";
-import "mapbox-gl/dist/mapbox-gl.css";
+import Rating from "../ui/Rating";
 
 interface Props {
   data: { room: IRoom };
 }
 
-mapboxgl.accessToken = process.env.MAPBOX_ACCESS_TOKEN;
+const RoomMap = dynamic(() => import("./RoomMap"), {
+  ssr: false,
+  loading: () => <div className="map-placeholder">Loading map...</div>,
+});
 
 const RoomDetails = ({ data }: Props) => {
-  useEffect(() => {
-    const setMap = () => {
-      const coordinates = room?.location.coordinates;
-
-      const map = new mapboxgl.Map({
-        container: "room-map",
-        style: "mapbox://styles/mapbox/streets-v11",
-        center: coordinates,
-        zoom: 12,
-      });
-
-      new mapboxgl.Marker().setLngLat(coordinates).addTo(map);
-    };
-
-    setMap();
-  }, []);
-
   const { room } = data;
+  const hasMapboxToken = Boolean(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN);
+
   return (
-    <div className="container container-fluid">
-      <h2 className="mt-5">{room.name}</h2>
-      <p>{room.address}</p>
+    <div className="container room-detail-page">
+      <header className="room-detail-header">
+        <div>
+          <span className="eyebrow">{room.category} room</span>
+          <h1>{room.name}</h1>
+          <p>{room.address}</p>
+        </div>
+        <div className="room-detail-rating">
+          <Rating value={room.ratings} size="large" />
+          <span>
+            {room.ratings.toFixed(1)} - {room.numOfReviews}{" "}
+            {room.numOfReviews === 1 ? "review" : "reviews"}
+          </span>
+        </div>
+      </header>
 
-      <div className="ratings mt-auto mb-3">
-        <StarRatings
-          rating={room?.ratings}
-          starRatedColor="orange"
-          numberOfStars={5}
-          name="rating"
-          starDimension="48px"
-          starSpacing="2px"
-        />
-      </div>
-
-      <div className="row">
-        <div className="col-10 col-md-8 col-lg-8 mx-auto">
-          <RoomImageSlider images={room?.images} />
+      <div className="row room-detail-primary">
+        <div className="col-12 col-lg-8">
+          <RoomImageSlider images={room.images} roomName={room.name} />
         </div>
 
-        <div className="col-8 col-md-6 col-lg-4 d-none d-lg-block align-content-center">
+        <aside className="col-12 col-lg-4 mt-4 mt-lg-0" aria-label="Book this room">
           <BookingDatePicker room={room} />
-        </div>
+        </aside>
       </div>
 
-      <div className="my-5">
-        <div className="row">
-          <div className="col-12 col-lg-7">
-            <h3>Description</h3>
-            <p>{room.description}</p>
-
-            <RoomFeatures room={room} />
-          </div>
-          <div className="col-12 col-md-7 col-sm-9 col-lg-5">
-            {room?.location && (
-              <div>
-                <h3>Room Location:</h3>
-                <div
-                  id="room-map"
-                  className="shadow rounded"
-                  style={{ height: 350, width: "100%" }}
-                ></div>
+      <div className="row room-detail-secondary">
+        <div className="col-12 col-lg-7">
+          <section className="detail-section" aria-labelledby="description-heading">
+            <span className="eyebrow">About this stay</span>
+            <h2 id="description-heading">Room overview</h2>
+            <p className="room-description">{room.description}</p>
+          </section>
+          <RoomFeatures room={room} />
+        </div>
+        <div className="col-12 col-lg-5">
+          <section className="detail-section" aria-labelledby="location-heading">
+            <span className="eyebrow">Location</span>
+            <h2 id="location-heading">Where you&apos;ll stay</h2>
+            {hasMapboxToken ? (
+              <RoomMap
+                coordinates={room.location.coordinates}
+                address={room.location.formattedAddress || room.address}
+              />
+            ) : (
+              <div className="map-placeholder" role="img" aria-label={`Map location: ${room.address}`}>
+                <span aria-hidden="true">Location</span>
+                <strong>{room.location.formattedAddress || room.address}</strong>
+                <small>Map preview is unavailable in this environment.</small>
               </div>
             )}
-          </div>
-        </div>
-        <div className="mt-5 col-md-7 col-sm-9 d-block d-lg-none booking-sidebar">
-          <BookingDatePicker room={room} />
+          </section>
         </div>
       </div>
 
-      <NewReview roomId={String(room?._id)} />
-
-      <ListReviews reviews={room?.reviews} />
+      <section className="room-reviews-section" aria-labelledby="reviews-heading">
+        <div className="reviews-heading-row">
+          <div>
+            <span className="eyebrow">Guest feedback</span>
+            <h2 id="reviews-heading">Reviews</h2>
+          </div>
+          <NewReview roomId={String(room._id)} />
+        </div>
+        <ListReviews reviews={room.reviews} />
+      </section>
     </div>
   );
 };

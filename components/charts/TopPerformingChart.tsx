@@ -34,5 +34,20 @@ export function TopPerformingChart({ rooms }: Props) {
       },
     ],
   };
-  return <Doughnut data={data} />;
+  return (
+    <figure className="chart-figure chart-figure-doughnut">
+      <Doughnut
+        data={data}
+        role="img"
+        aria-label="Bookings by top performing room"
+      />
+      <figcaption className="visually-hidden">
+        {rooms?.map((room) => (
+          <span key={room.roomName}>
+            {room.roomName}: {room.bookingsCount} bookings. {" "}
+          </span>
+        ))}
+      </figcaption>
+    </figure>
+  );
 }

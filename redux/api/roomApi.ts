@@ -9,7 +9,7 @@ export const roomApi = createApi({
       query(body) {
         return {
           url: "/reviews",
-          method: "PUT",
+          method: "POST",
           body,
         };
       },

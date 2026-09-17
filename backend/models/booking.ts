@@ -7,12 +7,13 @@ export interface IBooking extends Document {
   user: IUser;
   checkInDate: Date;
   checkOutDate: Date;
-  amountPaid: Number;
-  daysOfStay: Number;
+  amountPaid: number;
+  daysOfStay: number;
   paymentInfo: {
-    id: String;
-    status: String;
+    id: string;
+    status: string;
   };
+  stripeSessionId?: string;
   paidAt: Date;
   createdAt: Date;
 }
@@ -53,6 +54,11 @@ const bookingSchema: Schema<IBooking> = new mongoose.Schema({
       type: String,
       required: true,
     },
+  },
+  stripeSessionId: {
+    type: String,
+    unique: true,
+    sparse: true,
   },
   paidAt: {
     type: Date,

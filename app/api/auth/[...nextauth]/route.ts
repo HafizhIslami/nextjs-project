@@ -4,18 +4,29 @@ import bcrypt from "bcryptjs";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { NextRequest } from "next/server";
+import { enforceRateLimit } from "@/backend/utils/rateLimit";
 
-
-type Credentials = {
-  email: string;
-  password: string;
-};
 
 type Token = {
   user: IUser;
 };
 
-async function auth(req: NextRequest, res: any) {
+type RouteHandlerContext = {
+  params: { nextauth: string[] } | Promise<{ nextauth: string[] }>;
+};
+
+async function auth(req: NextRequest, res: RouteHandlerContext) {
+  if (
+    req.method === "POST" &&
+    req.nextUrl.pathname.endsWith("/callback/credentials")
+  ) {
+    const rateLimitResponse = enforceRateLimit(req, "auth:login", {
+      limit: 10,
+      windowMs: 15 * 60 * 1000,
+    });
+    if (rateLimitResponse) return rateLimitResponse;
+  }
+
   await dbConnect({ throwOnError: true });
   return await NextAuth(req, res, {
     session: {
@@ -23,10 +34,18 @@ async function auth(req: NextRequest, res: any) {
     },
     providers: [
       CredentialsProvider({
-        // @ts-ignore
-        async authorize(credentials: Credentials) {
+        credentials: {
+          email: { label: "Email", type: "email" },
+          password: { label: "Password", type: "password" },
+        },
+        async authorize(credentials) {
           await dbConnect({ throwOnError: true });
-          const { email, password } = credentials;
+          if (!credentials?.email || !credentials?.password) {
+            return null;
+          }
+
+          const email = credentials.email.trim().toLowerCase();
+          const password = credentials.password;
           const user = await User.findOne({ email }).select("+password").exec();
 
           if (!user) {
@@ -39,7 +58,9 @@ async function auth(req: NextRequest, res: any) {
             throw new Error("Invalid email or password");
           }
 
-          return user;
+          const safeUser = user.toObject();
+          delete (safeUser as { password?: string }).password;
+          return safeUser;
         },
       }),
     ],
@@ -62,8 +83,6 @@ async function auth(req: NextRequest, res: any) {
           session.user = token.user as IUser;
         }
 
-        // @ts-ignore
-        delete session?.user?.password;
         // console.log("session", session);
         // console.log("token", token);        
         return session;

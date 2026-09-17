@@ -1,54 +1,60 @@
-"use client";
-
 import { IRoom } from "@/backend/models/room";
+import Rating from "@/components/ui/Rating";
+import { normalizeImageUrl } from "@/helpers/imageUrl";
+import Image from "next/image";
+import Link from "next/link";
 import React from "react";
-import StarRating from "react-star-ratings";
 
 interface Props {
   room: IRoom;
 }
 const RoomItem = ({ room }: Props) => {
+  console.log("RoomItem room:", room); // Debugging line to check the room prop
   return (
-    <div className="col-sm-12 col-md-6 col-lg-4 px-4 my-3 d-flex">
-      <div className="card p-2 w-100">
-        <img
-          className="card-img-top mx-auto"
-          src={
-            room?.images?.length > 0
-              ? room.images[0].url
-              : "/images/default_room_image.jpg"
-          }
-          alt={room?.name}
-          height="170"
-          width="100"
-        />
-        <div className="card-body d-flex flex-column">
-          <h5 className="card-title">
-            <a href={`/rooms/${room._id}`}>{room?.name}</a>
-          </h5>
-          <div className="mt-auto">
-            <p className="card-text mt-2">
-              <b>$ {room.pricePerNight}</b> / night
+    <article className="col-sm-12 col-md-6 col-lg-4 d-flex">
+      <div className="room-card w-100">
+        <Link href={`/rooms/${room._id}`} className="room-card-image-link">
+          <Image
+            className="room-card-image"
+            src={normalizeImageUrl(
+              room.images[0]?.url,
+              "/images/default_room_image.jpg"
+            )}
+            alt={`${room.name} room`}
+            height={240}
+            width={420}
+            sizes="(max-width: 767px) 100vw, (max-width: 1199px) 50vw, 33vw"
+          />
+          <span className="room-category">{room.category}</span>
+        </Link>
+        <div className="room-card-body">
+          <div className="room-card-topline">
+            <div>
+              <p className="room-location">{room.address}</p>
+              <h3 className="room-card-title">
+                <Link href={`/rooms/${room._id}`}>{room.name}</Link>
+              </h3>
+            </div>
+            <p className="room-capacity">
+              {room.guestCapacity} {room.guestCapacity === 1 ? "guest" : "guests"}
             </p>
           </div>
-          <div>
-            <div>
-              <StarRating
-                rating={room.ratings}
-                starRatedColor="orange"
-                numberOfStars={5}
-                starDimension="18px"
-                name="rating"
-              />
-              <span className="no-of-reviews">({room?.numOfReviews} Reviews)</span>
+          <div className="room-card-meta">
+            <div className="room-rating">
+              <Rating value={room.ratings} />
+              <span>{room.numOfReviews} reviews</span>
             </div>
-            <a className="btn view-btn mt-3 w-100" href={`/rooms/${room._id}`}>
-              View Details
-            </a>
+            <p className="room-price">
+              <strong>${room.pricePerNight}</strong>
+              <span> / night</span>
+            </p>
           </div>
+          <Link className="btn btn-secondary-roomi w-100" href={`/rooms/${room._id}`}>
+            View room details
+          </Link>
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 

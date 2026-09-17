@@ -81,5 +81,22 @@ export function SalesChart({ salesData }: Props) {
       },
     ],
   };
-  return <Line options={options} data={data} />;
+  return (
+    <figure className="chart-figure">
+      <Line
+        options={options}
+        data={data}
+        role="img"
+        aria-label="Sales and booking totals for the last six months"
+      />
+      <figcaption className="visually-hidden">
+        {salesData?.map((item) => (
+          <span key={item.monthName}>
+            {item.monthName}: ${item.totalSales} in sales and {item.numOfBookings}{" "}
+            bookings. {" "}
+          </span>
+        ))}
+      </figcaption>
+    </figure>
+  );
 }

@@ -7,19 +7,23 @@ interface Props {
 
 const UserLayout = ({ children }: Props) => {
   return (
-    <>
-      <div className="mt-2 mb-4 bg-light py-4">
-        <h2 className="text-secondary text-center">User Settings</h2>
-      </div>
-      <div className="container">
+    <div className="account-settings-shell">
+      <header className="dashboard-page-header">
+        <div className="container">
+          <span className="eyebrow">Your account</span>
+          <h1>Account settings</h1>
+          <p>Keep your profile and sign-in details up to date.</p>
+        </div>
+      </header>
+      <div className="container admin-shell-grid">
         <div className="row justify-content-around">
-          <div className="col-12 col-lg-3">
+          <aside className="col-12 col-lg-3" aria-label="Account settings navigation">
             <UserSidebar />
-          </div>
+          </aside>
           <div className="col-12 col-lg-8 user-dashboard">{children}</div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

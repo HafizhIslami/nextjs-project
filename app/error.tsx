@@ -12,19 +12,15 @@ export default function Error({
   reset?: () => void;
 }) {
   return (
-    <div>
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="text-center">
-          <h2 className="display-4 fw-bold">{error?.errMessage}</h2>
-          <p className="fs-3">
-            <span className="text-danger">Opps!</span> Something went wrong!
-          </p>
-          <p className="lead">Sorry for inconvenience</p>
-          <button className="btn btn-primary" onClick={() => reset?.()}>
+    <section className="feedback-page" role="alert">
+      <div className="feedback-card">
+          <span className="eyebrow">Something went wrong</span>
+          <h1>{error?.errMessage || "We could not load this page"}</h1>
+          <p>Please try again. Your previous action has not been discarded.</p>
+          <button className="btn btn-primary-roomi" onClick={() => reset?.()}>
             Try again
           </button>
-        </div>
       </div>
-    </div>
+    </section>
   );
 }

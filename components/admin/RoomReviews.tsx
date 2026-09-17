@@ -1,12 +1,11 @@
 "use client";
 
 import { IReview } from "@/backend/models/room";
-import { revalidateTag } from "@/helpers/revalidate";
 import {
   useDeleteReviewMutation,
   useLazyGetRoomReviewsQuery,
 } from "@/redux/api/roomApi";
-import SimpleDataTable from "./SimpleDataTable";
+import SimpleDataTable, { DataTableData } from "./SimpleDataTable";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -31,14 +30,13 @@ const RoomReviews = () => {
     }
 
     if (isSuccess) {
-      revalidateTag("RoomDetails");
       router.refresh();
       toast.success("Review deleted");
     }
-  }, [error, isSuccess]);
+  }, [error, isSuccess, router]);
 
   const setReviews = () => {
-    const data: { columns: any[]; rows: any[] } = {
+    const data: DataTableData = {
       columns: [
         {
           label: "ID",
@@ -67,7 +65,7 @@ const RoomReviews = () => {
 
     reviews?.forEach((review: IReview) => {
       data?.rows?.push({
-        id: review._id,
+        id: review._id?.toString(),
         rating: review?.rating,
         comment: review?.comment,
         actions: (
@@ -77,7 +75,7 @@ const RoomReviews = () => {
               disabled={isLoading}
               onClick={() => deleteReviewHandler(review?._id?.toString() ?? "")}
             >
-              <i className="fa fa-trash"></i>
+              Delete
             </button>
           </>
         ),
@@ -88,15 +86,17 @@ const RoomReviews = () => {
   };
 
   const deleteReviewHandler = (id: string) => {
-    deleteReview({ id, roomId });
+    if (window.confirm("Delete this review? This action cannot be undone.")) {
+      deleteReview({ id, roomId });
+    }
   };
 
   return (
     <div>
       <div className="row justify-content-center mt-5">
-        <div className="col-6">
-          <div className="form-check">
-            <label htmlFor="roomId_field">Enter Room ID</label>
+        <div className="col-12 col-md-8">
+          <div className="surface-card review-lookup">
+            <label htmlFor="roomId_field">Room ID</label>
             <input
               type="text"
               id="roomId_field"
@@ -109,7 +109,7 @@ const RoomReviews = () => {
               className="btn form-btn w-100 py-2 mt-3"
               onClick={getRoomReviewsHandler}
             >
-              Fetch Reviews
+              Find reviews
             </button>
           </div>
         </div>
@@ -118,7 +118,7 @@ const RoomReviews = () => {
       {reviews?.length > 0 ? (
         <SimpleDataTable data={setReviews()} className="px-3" />
       ) : (
-        <h5 className="mt-5 text-center">No Reviews</h5>
+        <p className="empty-state mt-5">No reviews found.</p>
       )}
     </div>
   );

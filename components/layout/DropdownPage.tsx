@@ -1,11 +1,10 @@
-import React, { ChangeEventHandler, ReactEventHandler, useState } from "react";
+import React from "react";
 
 const DropdownPage = ({
   reqEntries,
 }: {
   reqEntries: (data: number) => void;
 }) => {
-  const [pageCount, setPageCount] = useState(4);
   const onChangeHandler = (value: string) => {
     reqEntries(Number(value));
   };

@@ -2,6 +2,7 @@
 
 import { useRegisterMutation } from "@/redux/api/authApi";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import React, {
   ChangeEventHandler,
   FormEvent,
@@ -10,9 +11,6 @@ import React, {
 } from "react";
 import toast from "react-hot-toast";
 import ButtonLoader from "../layout/ButtonLoader";
-import { registerUser } from "@/actions/actions";
-import SubmitButton from "../form/SubmitButton";
-import { CustomError } from "@/interfaces/customError";
 
 const Register = () => {
   const [user, setUser] = useState({
@@ -41,7 +39,7 @@ const Register = () => {
       router.push("/login");
       toast.success("Registration successful. You can login now");
     }
-  }, [error, isSuccess]);
+  }, [error, isSuccess, router]);
 
   const submitHandler = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -88,6 +86,8 @@ const Register = () => {
               name="name"
               value={name}
               onChange={onChange}
+              autoComplete="name"
+              required
             />
           </div>
 
@@ -103,10 +103,12 @@ const Register = () => {
               name="email"
               value={email}
               onChange={onChange}
+              autoComplete="email"
+              required
             />
           </div>
 
-          <div className="mb-3" style={{ position: "relative" }}>
+          <div className="mb-3 password-field">
               <label className="form-label" htmlFor="password_field">
                 Password
               </label>
@@ -117,28 +119,32 @@ const Register = () => {
                 name="password"
                 value={password}
                 onChange={onChange}
-                style={{ paddingRight: "2.5rem" }} // Space for the eye icon
+                autoComplete="new-password"
+                minLength={6}
+                aria-describedby="password_help"
+                required
               />
-              <i
+              <button
+                type="button"
                 onClick={togglePasswordVisibility}
-                className={`${
-                  showPassword ? "fa-solid fa-eye-slash" : "fa-solid fa-eye"
-                } fa-fw`}
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  top: "75%",
-                  transform: "translateY(-50%)",
-                  cursor: "pointer",
-                  color: "#888",
-                }}
-              />
+                className="password-toggle"
+                aria-pressed={showPassword}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+              <div className="form-text" id="password_help">
+                Use at least 6 characters.
+              </div>
             </div>
 
           {/* <SubmitButton text="Register" className="btn form-btn w-100 py-2" /> */}
-          <button type="submit" className="btn form-btn w-100 py-2">
+          <button type="submit" className="btn form-btn w-100 py-2" disabled={isLoading}>
             {isLoading ? <ButtonLoader /> : "Register"}
           </button>
+          <p className="auth-switch-link">
+            Already have an account? <Link href="/login">Log in</Link>
+          </p>
         </form>
       </div>
     </div>

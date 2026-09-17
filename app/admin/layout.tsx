@@ -7,19 +7,23 @@ interface Props {
 
 const AdminLayout = ({ children }: Props) => {
   return (
-    <>
-      <div className="mt-2 mb-4 bg-light py-4">
-        <h2 className="text-center">Admin Dashboard</h2>
-      </div>
-      <div className="container">
-        <div className="row justify-content-around">
-          <div className="col-12 col-lg-3">
+    <div className="admin-shell">
+      <header className="dashboard-page-header">
+        <div className="container">
+          <span className="eyebrow">Operations</span>
+          <h1>Admin dashboard</h1>
+          <p>Manage inventory, bookings, customers, and performance.</p>
+        </div>
+      </header>
+      <div className="container admin-shell-grid">
+        <div className="row justify-content-between">
+          <aside className="col-12 col-lg-3" aria-label="Admin navigation">
             <AdminSidebar />
-          </div>
-          <div className="col-12 col-lg-8 Admin-dashboard">{children}</div>
+          </aside>
+          <div className="col-12 col-lg-9 admin-dashboard-content">{children}</div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

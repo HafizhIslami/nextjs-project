@@ -1,50 +1,44 @@
 import { IImage } from "@/backend/models/room";
+import { normalizeImageUrl } from "@/helpers/imageUrl";
+import Image from "next/image";
 import React from "react";
-import { Carousel, Image } from "react-bootstrap";
+import { Carousel } from "react-bootstrap";
 
 interface Props {
   images: IImage[];
+  roomName: string;
 }
-const RoomImageSlider = ({ images }: Props) => {
+const RoomImageSlider = ({ images, roomName }: Props) => {
   return (
-    <Carousel fade data-bs-theme="dark">
+    <Carousel fade data-bs-theme="dark" className="room-gallery">
       {images.length > 0 ? (
-        images.map((image) => (
+        images.map((image, index) => (
           <Carousel.Item key={image.public_id}>
-            <div
-              style={{
-                height: "460px",
-              }}
-              className="carousel-content d-flex justify-content-center align-items-center"
-            >
+            <div className="room-gallery-frame">
               <Image
-                className="d-block m-auto h-100"
-                src={image?.url}
-                alt={image?.url}
+                fill
+                priority={index === 0}
+                sizes="(max-width: 991px) 100vw, 66vw"
+                src={normalizeImageUrl(image.url, "/images/default_room_image.jpg")}
+                alt={`${roomName}, photo ${index + 1} of ${images.length}`}
               />
             </div>
           </Carousel.Item>
         ))
       ) : (
         <Carousel.Item>
-          <div
-            style={{
-              height: "460px",
-              alignContent: "center",
-            }}
-          >
+          <div className="room-gallery-frame">
             <Image
-              className="d-block m-auto w-100"
-              src={`/public/images/default_room_image.jpg`}
-              alt="images/default_room_image.jpg"
+              fill
+              priority
+              sizes="(max-width: 991px) 100vw, 66vw"
+              src="/images/default_room_image.jpg"
+              alt={`${roomName} placeholder photo`}
             />
           </div>
         </Carousel.Item>
       )}
     </Carousel>
-    // <div className={"w-100 h-100"}>
-
-    // </div>
   );
 };
 

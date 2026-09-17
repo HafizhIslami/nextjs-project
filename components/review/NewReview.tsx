@@ -1,16 +1,16 @@
-import { revalidateTag } from "@/helpers/revalidate";
 import {
   useAllowReviewQuery,
   usePostReviewMutation,
 } from "@/redux/api/roomApi";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { Modal } from "react-bootstrap";
 import toast from "react-hot-toast";
-import StarRatings from "react-star-ratings";
 
 const NewReview = ({ roomId }: { roomId: string }) => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
+  const [show, setShow] = useState(false);
 
   const router = useRouter();
 
@@ -23,11 +23,10 @@ const NewReview = ({ roomId }: { roomId: string }) => {
     }
 
     if (isSuccess) {
-      revalidateTag("RoomDetails");
       toast.success("Review posted");
       router.refresh();
     }
-  }, [error, isSuccess]);
+  }, [error, isSuccess, router]);
 
   const submitHandler = () => {
     const reviewData = {
@@ -37,75 +36,68 @@ const NewReview = ({ roomId }: { roomId: string }) => {
     };
 
     postReview(reviewData);
+    setShow(false);
   };
   return (
     <>
       {allowReview && (
         <button
           type="button"
-          className="btn form-btn mt-4 mb-5"
-          data-bs-toggle="modal"
-          data-bs-target="#ratingModal"
+          className="btn btn-secondary-roomi"
+          onClick={() => setShow(true)}
         >
-          Submit Your Review
+          Write a review
         </button>
       )}
-      <div
-        className="modal fade"
-        id="ratingModal"
-        tabIndex={-1}
-        role="dialog"
-        aria-labelledby="ratingModalLabel"
-        aria-hidden="true"
-      >
-        <div className="modal-dialog" role="document">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title" id="ratingModalLabel">
-                Submit Review
-              </h5>
-              <button
-                type="button"
-                className="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
+      <Modal show={show} onHide={() => setShow(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Write a review</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <fieldset className="rating-fieldset">
+            <legend>Your rating</legend>
+            <div className="rating-picker">
+              {[1, 2, 3, 4, 5].map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={value <= rating ? "selected" : ""}
+                  aria-label={`${value} ${value === 1 ? "star" : "stars"}`}
+                  aria-pressed={rating === value}
+                  onClick={() => setRating(value)}
+                >
+                  <span className="review-star-icon" aria-hidden="true" />
+                </button>
+              ))}
             </div>
-            <div className="modal-body">
-              <h5>Give your rating !</h5>
-              <StarRatings
-                rating={rating}
-                starRatedColor="orange"
-                numberOfStars={5}
-                name="rating"
-                changeRating={(e: any) => setRating(e)}
-              />
-              <div className="form-floating">
-                <textarea
-                  id="review_field"
-                  className="form-control mt-4"
-                  placeholder="Leave your review"
-                  style={{ height: "100px" }}
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                ></textarea>
-                <label htmlFor="review_field">Comment</label>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn my-3 form-btn w-100"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-                onClick={submitHandler}
-              >
-                Submit
-              </button>
-            </div>
+          </fieldset>
+          <div className="mt-4">
+            <label className="form-label" htmlFor="review_field">Comment</label>
+            <textarea
+              id="review_field"
+              className="form-control"
+              placeholder="Tell future guests about your stay"
+              rows={4}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              required
+            />
           </div>
-        </div>
-      </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <button type="button" className="btn btn-light" onClick={() => setShow(false)}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary-roomi"
+            onClick={submitHandler}
+            disabled={!rating || !comment.trim()}
+          >
+            Submit review
+          </button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 };

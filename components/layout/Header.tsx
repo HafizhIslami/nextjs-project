@@ -1,127 +1,98 @@
 "use client";
 
 import { setIsAuthenticated, setUser } from "@/redux/features/userSlice";
+import type { AuthUser } from "@/redux/features/userSlice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { normalizeImageUrl } from "@/helpers/imageUrl";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import roomiLogo from "../../public/images/roomi_header_small.png";
-import { usePathname } from "next/navigation";
 
 const Header = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-  const { data } = useSession();
-  const pathName = usePathname();
-  const [currentPage, setCurrentPage] = useState(false);
+  const { data, status } = useSession();
 
   useEffect(() => {
     if (data) {
-      dispatch(setUser(data?.user));
+      dispatch(setUser(data.user as AuthUser));
       dispatch(setIsAuthenticated(true));
+    } else if (status === "unauthenticated") {
+      dispatch(setUser(null));
+      dispatch(setIsAuthenticated(false));
     }
-    console.log(pathName);
-    if (pathName === "/login") {
-      setCurrentPage(true);
-    } else setCurrentPage(false);
-  }, [data, pathName]);
+  }, [data, dispatch, status]);
 
-  const logoutHandler = () => {
-    signOut();
+  const logoutHandler = async () => {
+    await signOut({ callbackUrl: "/" });
   };
 
   return (
-    <nav className="navbar sticky-top py-2">
-      <div className="container">
-        <div className="col-6 col-lg-3 p-0">
-          <div className="navbar-brand">
-            <a href="/">
-              <Image
-                style={{ cursor: "pointer" }}
-                src={roomiLogo}
-                alt="Roomi"
-                width={190}
-              />
-            </a>
-          </div>
-        </div>
+    <header className="site-header sticky-top">
+      <nav className="container header-nav" aria-label="Primary navigation">
+        <Link href="/" className="brand-link" aria-label="Roomi home">
+          <Image
+            src={roomiLogo}
+            alt="Roomi"
+            width={190}
+            priority
+            className="brand-logo"
+          />
+        </Link>
 
-        <div className="col-6 col-lg-3 text-end align-content-center">
-          {user ? (
-            <div className="ml-4 dropdown d-line">
-              <button
-                className="btn dropdown-toggle"
-                type="button"
-                id="dropdownMenuButton1"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                <figure className="avatar avatar-nav">
-                  <img
-                    src={
-                      user?.avatar
-                        ? user?.avatar?.url
-                        : "/images/default_avatar.jpg"
-                    }
-                    alt={user?.name}
-                    className="rounded-circle placeholder-glow"
-                    height="50"
-                    width="50"
-                  />
-                </figure>
-                <span className="placeholder-glow ps-1">
-                  {" "}
-                  {user?.name?.replace(/\b(\w)/g, (s: any) => s.toUpperCase())}
+        <div className="header-actions">
+          <Link href="/search" className="header-browse-link">
+            Browse stays
+          </Link>
+
+          {status === "loading" ? (
+            <div className="account-skeleton" aria-label="Loading account" />
+          ) : user ? (
+            <details className="account-menu">
+              <summary>
+                <Image
+                  src={normalizeImageUrl(
+                    user.avatar?.url,
+                    "/images/default_avatar.jpg"
+                  )}
+                  alt=""
+                  className="rounded-circle"
+                  height={40}
+                  width={40}
+                  sizes="40px"
+                />
+                <span className="account-name">
+                  {user.name.replace(/\b(\w)/g, (letter: string) =>
+                    letter.toUpperCase()
+                  )}
                 </span>
-              </button>
-
-              <div
-                className="dropdown-menu w-100"
-                aria-labelledby="dropdownMenuButton1"
-              >
+              </summary>
+              <div className="account-panel">
                 {user.role === "admin" && (
-                  <Link href="/admin/dashboard" className="dropdown-item">
-                    Dashboard
-                  </Link>
+                  <Link href="/admin/dashboard">Admin dashboard</Link>
                 )}
-                <Link href="/bookings/me" className="dropdown-item">
-                  My Bookings
-                </Link>
-                <Link href="/me/update" className="dropdown-item">
-                  Profile
-                </Link>
-                <Link
-                  href="/"
-                  className="dropdown-item text-danger"
-                  onClick={logoutHandler}
-                >
-                  Logout
-                </Link>
+                <Link href="/bookings/me">My bookings</Link>
+                <Link href="/me/update">Account settings</Link>
+                <button type="button" onClick={logoutHandler}>
+                  Log out
+                </button>
               </div>
-            </div>
+            </details>
           ) : (
-            <>
-              {data === undefined && (
-                <div className="placeholder-glow">
-                  <figure className="avatar avatar-nv placeholder bg-secondary"></figure>
-                  <span className="placeholder w-25 bg-secondary ms-2"></span>
-                </div>
-              )}
-              {data === null && (
-                <Link
-                  href="/login"
-                  className="btn form-btn mt-0 px-4 login-header-btn float-right"
-                  hidden={currentPage}
-                >
-                  Login
-                </Link>
-              )}
-            </>
+            <div className="auth-actions">
+              <Link href="/register" className="btn btn-ghost auth-register">
+                Sign up
+              </Link>
+              <Link href="/login" className="btn btn-primary-roomi">
+                Log in
+              </Link>
+            </div>
           )}
         </div>
-      </div>
-    </nav>
+      </nav>
+    </header>
   );
 };
 

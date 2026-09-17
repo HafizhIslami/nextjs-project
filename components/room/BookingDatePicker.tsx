@@ -4,10 +4,10 @@ import {
   useGetBookedDatesQuery,
   useLazyCheckBookingAvailabilityQuery,
   useLazyStripeCheckoutQuery,
-  useNewBookingMutation,
 } from "@/redux/api/bookingApi";
 import { useAppSelector } from "@/redux/hooks";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button, Modal } from "react-bootstrap";
 import DatePicker from "react-datepicker";
@@ -25,8 +25,7 @@ const BookingDatePicker = ({ room }: Props) => {
 
   const [show, setShow] = useState(false);
 
-  const [newBooking] = useNewBookingMutation();
-  const [checkBookingAvailability, { data }] =
+  const [checkBookingAvailability, { data, isFetching: isChecking }] =
     useLazyCheckBookingAvailabilityQuery();
 
   const router = useRouter();
@@ -71,10 +70,14 @@ const BookingDatePicker = ({ room }: Props) => {
     if (checkoutData) {
       router.replace(checkoutData?.url);
     }
-  }, [error, checkoutData]);
+  }, [checkoutData, error, router]);
 
   const paymentInstructionHandler = () => {
     setShow(true);
+  };
+
+  const closePaymentInstructions = () => {
+    setShow(false);
   };
 
   const bookRoom = () => {
@@ -108,72 +111,103 @@ const BookingDatePicker = ({ room }: Props) => {
   // };
 
   return (
-    <div className="booking-card shadow p-4">
-      <p className="price-per-night">
-        <b>$ {room?.pricePerNight}</b> / night
-      </p>
+    <div className="booking-card">
+      <div className="booking-price-row">
+        <p className="price-per-night">
+          <b>${room.pricePerNight}</b> <span>/ night</span>
+        </p>
+        <span className="secure-label">Secure checkout</span>
+      </div>
       <hr />
-      <p className="mt-5 mb-3">Pick Check In & Check Out Date</p>
-      <DatePicker
-        className="w-100"
-        selected={checkInDate}
-        onChange={onChangeHandler}
-        startDate={checkInDate}
-        endDate={checkOutDate}
-        minDate={new Date()}
-        excludeDates={excludeDates}
-        selectsRange
-        inline
-      />
-      {isAvailable ? (
-        <p className="alert alert-success my-3" hidden={!dateSelected}>
-          Room is available. Let's book now!
-        </p>
-      ) : (
-        <p className="alert alert-danger my-3" hidden={!dateSelected}>
-          Room is not available. Please select another dates.
-        </p>
+      <p className="booking-instruction">Select check-in and check-out dates</p>
+      <div className="booking-calendar">
+        <DatePicker
+          selected={checkInDate}
+          onChange={onChangeHandler}
+          startDate={checkInDate}
+          endDate={checkOutDate}
+          minDate={new Date()}
+          excludeDates={excludeDates}
+          selectsRange
+          inline
+        />
+      </div>
+
+      <div aria-live="polite">
+        {isChecking && dateSelected && (
+          <p className="availability-message checking">Checking availability...</p>
+        )}
+        {!isChecking && dateSelected && isAvailable === true && (
+          <p className="availability-message available">
+            Available for {daysOfStay} {daysOfStay === 1 ? "night" : "nights"}.
+          </p>
+        )}
+        {!isChecking && dateSelected && isAvailable === false && (
+          <p className="availability-message unavailable">
+            Those dates are unavailable. Please choose another range.
+          </p>
+        )}
+      </div>
+
+      {dateSelected && isAvailable && (
+        <div className="booking-summary">
+          <span>
+            ${room.pricePerNight} x {daysOfStay} {daysOfStay === 1 ? "night" : "nights"}
+          </span>
+          <strong>${daysOfStay * room.pricePerNight}</strong>
+        </div>
       )}
 
       {isAvailable &&
         (isAuthenticated ? (
           <button
-            className="btn py-3 form-btn w-100"
+            className="btn btn-primary-roomi w-100"
             onClick={paymentInstructionHandler}
             disabled={isLoading}
             hidden={!dateSelected}
           >
-            Pay - ${daysOfStay * room?.pricePerNight}
+            Review and continue - ${daysOfStay * room.pricePerNight}
           </button>
         ) : (
-          <div className="alert alert-danger my-3 d-flex align-items-center justify-content-between">
-            Login to book room
-            <a className="btn form-btn mt-0 d-block d-lg-none" href="/login">
-              Login
-            </a>
-          </div>
+          dateSelected && (
+            <div className="login-to-book">
+              <p>Log in to continue with this booking.</p>
+              <Link className="btn btn-secondary-roomi w-100" href="/login">
+                Log in to book
+              </Link>
+            </div>
+          )
         ))}
 
-      <Modal show={show} onHide={bookRoom} centered>
+      <p className="booking-footnote">You will review the details before payment.</p>
+
+      <Modal show={show} onHide={closePaymentInstructions} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Payment Instructions</Modal.Title>
+          <Modal.Title>Review payment details</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <p>
-            For this testing payment mode, please follow this instruction:
-            <br />
-            <strong>Card Number:</strong> 4242 4242 4242 4242
-            <br />
-            <strong>Valid Thru:</strong> 12/34
-            <br />
-            <strong>CVC:</strong> 3 random number
+            You are booking <strong>{room.name}</strong> for {daysOfStay}{" "}
+            {daysOfStay === 1 ? "night" : "nights"}.
           </p>
-          <span />
-          <p>Thanks !</p>
+          <div className="modal-booking-total">
+            <span>Total</span>
+            <strong>${daysOfStay * room.pricePerNight}</strong>
+          </div>
+          <div className="test-payment-note">
+            <strong>Test payment only</strong>
+            <p>
+              Use card 4242 4242 4242 4242, any future expiry date, and any
+              three-digit CVC on Stripe&apos;s checkout page.
+            </p>
+          </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={bookRoom}>
-            Close
+          <Button variant="light" onClick={closePaymentInstructions}>
+            Cancel
+          </Button>
+          <Button className="btn-primary-roomi" onClick={bookRoom} disabled={isLoading}>
+            Continue to secure payment
           </Button>
         </Modal.Footer>
       </Modal>

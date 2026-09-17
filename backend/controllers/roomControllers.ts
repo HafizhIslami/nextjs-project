@@ -7,6 +7,52 @@ import Booking from "../models/booking";
 import { URL } from "url";
 import { delete_file, upload_file } from "../utils/cloudinary";
 import dbConnect from "../config/dbConnect";
+import {
+  requireImageDataUrl,
+  requireObjectId,
+  requireString,
+} from "../utils/validation";
+
+const getRoomInput = (body: unknown) => {
+  if (!body || typeof body !== "object") {
+    throw new ErrorHandler("Invalid room payload", 400);
+  }
+
+  const input = body as Record<string, unknown>;
+  const pricePerNight = Number(input.pricePerNight);
+  const guestCapacity = Number(input.guestCapacity);
+  const numOfBeds = Number(input.numOfBeds);
+
+  if (!Number.isFinite(pricePerNight) || pricePerNight < 0) {
+    throw new ErrorHandler("Invalid room price", 400);
+  }
+  if (!Number.isInteger(guestCapacity) || guestCapacity < 1) {
+    throw new ErrorHandler("Invalid guest capacity", 400);
+  }
+  if (!Number.isInteger(numOfBeds) || numOfBeds < 1) {
+    throw new ErrorHandler("Invalid number of beds", 400);
+  }
+
+  const category = input.category;
+  if (category !== "King" && category !== "Single" && category !== "Twins") {
+    throw new ErrorHandler("Invalid room category", 400);
+  }
+
+  return {
+    name: requireString(input.name, "Room name", 200),
+    description: requireString(input.description, "Room description", 10000),
+    pricePerNight,
+    address: requireString(input.address, "Room address", 500),
+    category,
+    guestCapacity,
+    numOfBeds,
+    isInternet: input.isInternet === true,
+    isBreakfast: input.isBreakfast === true,
+    isAirConditioned: input.isAirConditioned === true,
+    isPetsAllowed: input.isPetsAllowed === true,
+    isRoomCleaning: input.isRoomCleaning === true,
+  };
+};
 
 // still have a problem in allRooms at rooms
 export const allRooms = catchAsyncErrors(
@@ -45,8 +91,10 @@ export const allRooms = catchAsyncErrors(
 export const newRoom = catchAsyncErrors(async (req: NextRequest) => {
   await dbConnect({ throwOnError: true });
   const body = await req.json();
-  body.user = req.user._id;
-  const room = await Room.create(body);
+  const room = await Room.create({
+    ...getRoomInput(body),
+    user: req.user._id,
+  });
 
   return NextResponse.json({
     success: true,
@@ -77,16 +125,16 @@ export const getRoomDetail = catchAsyncErrors(
 export const updateRoom = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
     await dbConnect({ throwOnError: true });
-    let room = await Room.findById(params.id);
+    requireObjectId(params?.id, "room ID");
+    const room = await Room.findById(params.id);
     const body = await req.json();
 
     if (!room) {
       return NextResponse.json({ message: "Room not found" }, { status: 404 });
     }
 
-    room = await Room.findByIdAndUpdate(params.id, body, {
-      new: true,
-    });
+    room.set(getRoomInput(body));
+    await room.save();
 
     return NextResponse.json({
       success: true,
@@ -110,7 +158,14 @@ export const uploadRoomImages = catchAsyncErrors(
       upload_file(image, "bookit/rooms");
 
     const images = Array.isArray(body?.images) ? body.images : [];
-    const urls = await Promise.all(images.map(uploader));
+    if (images.length === 0 || images.length > 10) {
+      throw new ErrorHandler("Upload between 1 and 10 images", 400);
+    }
+
+    const validatedImages = images.map((image: unknown, index: number) =>
+      requireImageDataUrl(image, `Image ${index + 1}`)
+    );
+    const urls = await Promise.all(validatedImages.map(uploader));
 
     room?.images?.push(...urls);
 
@@ -134,11 +189,19 @@ export const deleteRoomImage = catchAsyncErrors(
       throw new ErrorHandler("Room not found", 404);
     }
 
-    const isDeleted = await delete_file(body?.imgId);
+    const imageId = requireString(body?.imgId, "Image ID", 300);
+    const imageExists = room.images.some(
+      (image: IImage) => image.public_id === imageId
+    );
+    if (!imageExists) {
+      throw new ErrorHandler("Image not found in this room", 404);
+    }
+
+    const isDeleted = await delete_file(imageId);
 
     if (isDeleted) {
       room.images = room?.images.filter(
-        (img: IImage) => img.public_id !== body.imgId
+        (img: IImage) => img.public_id !== imageId
       );
     }
 
@@ -173,11 +236,26 @@ export const deleteRoom = catchAsyncErrors(
 export const createRoomReview = catchAsyncErrors(async (req: NextRequest) => {
   await dbConnect({ throwOnError: true });
   const body = await req.json();
-  const { rating, comment, roomId } = body;
+  const roomId = requireObjectId(body?.roomId, "room ID");
+  const rating = Number(body?.rating);
+  const comment = requireString(body?.comment, "Review comment", 2000);
+
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    throw new ErrorHandler("Rating must be between 1 and 5", 400);
+  }
+
+  const completedBooking = await Booking.exists({
+    user: req.user._id,
+    room: roomId,
+    checkOutDate: { $lt: new Date() },
+  });
+  if (!completedBooking) {
+    throw new ErrorHandler("You can only review a completed booking", 403);
+  }
 
   const review = {
     user: req.user._id,
-    rating: Number(rating),
+    rating,
     comment,
   };
 
@@ -191,9 +269,10 @@ export const createRoomReview = catchAsyncErrors(async (req: NextRequest) => {
 
   if (isReviewed) {
     room?.reviews?.forEach((review: IReview) => {
-      if (review.user?.toString() === req?.user?._id?.toString())
+      if (review.user?.toString() === req?.user?._id?.toString()) {
         review.comment = comment;
-      review.rating = rating;
+        review.rating = rating;
+      }
     });
   } else {
     room.reviews.push(review);
@@ -217,7 +296,7 @@ export const createRoomReview = catchAsyncErrors(async (req: NextRequest) => {
 export const getAllowReview = catchAsyncErrors(async (request: NextRequest) => {
   await dbConnect({ throwOnError: true });
   const { searchParams } = new URL(request.url);
-  const roomId = searchParams.get("roomId");
+  const roomId = requireObjectId(searchParams.get("roomId"), "room ID");
   const bookings = await Booking.find({
     user: request.user._id,
     room: roomId,
@@ -249,7 +328,8 @@ export const getRoomReviews = catchAsyncErrors(async (req: NextRequest) => {
   await dbConnect({ throwOnError: true });
   const { searchParams } = new URL(req.url);
 
-  const room = await Room.findById(searchParams.get("roomId"))
+  const roomId = requireObjectId(searchParams.get("roomId"), "room ID");
+  const room = await Room.findById(roomId)
     .select({ reviews: 1 })
     .lean()
     .exec();
@@ -268,8 +348,8 @@ export const deleteRoomReview = catchAsyncErrors(async (req: NextRequest) => {
   await dbConnect({ throwOnError: true });
   const { searchParams } = new URL(req.url);
 
-  const roomId = searchParams.get("roomId");
-  const reviewId = searchParams.get("id");
+  const roomId = requireObjectId(searchParams.get("roomId"), "room ID");
+  const reviewId = requireObjectId(searchParams.get("id"), "review ID");
 
   const room = await Room.findById(roomId).select({ reviews: 1 }).lean().exec();
 

@@ -7,12 +7,20 @@ import { resetPasswordHTMLTemplate } from "../utils/emailTemplates";
 import sendEmail from "../utils/sendEmail";
 import crypto from "crypto";
 import dbConnect from "../config/dbConnect";
+import {
+  normalizeEmail,
+  requireImageDataUrl,
+  requirePassword,
+  requireString,
+} from "../utils/validation";
 
 export const registerUser = catchAsyncErrors(async (req: NextRequest) => {
   await dbConnect({ throwOnError: true });
   const body = await req.json();
 
-  const { name, email, password } = body;
+  const name = requireString(body?.name, "Name", 30);
+  const email = normalizeEmail(body?.email);
+  const password = requirePassword(body?.password);
 
   await User.create({
     name,
@@ -30,10 +38,13 @@ export const updateProfile = catchAsyncErrors(async (req: NextRequest) => {
   const body = await req.json();
 
   const userData = {
-    name: body.name,
-    email: body.email,
+    name: requireString(body?.name, "Name", 30),
+    email: normalizeEmail(body?.email),
   };
-  const user = await User.findByIdAndUpdate(req.user._id, userData);
+  const user = await User.findByIdAndUpdate(req.user._id, userData, {
+    new: true,
+    runValidators: true,
+  }).select("-password").lean().exec();
 
   return NextResponse.json({
     success: true,
@@ -46,13 +57,19 @@ export const updatePassword = catchAsyncErrors(async (req: NextRequest) => {
   const body = await req.json();
 
   const user = await User.findById(req?.user?._id).select("+password");
-  const isMatched = await user.comparePassword(body.oldPassword);
+  if (!user) {
+    throw new ErrorHandler("User not found", 404);
+  }
+
+  const oldPassword = requirePassword(body?.oldPassword, "Old password");
+  const newPassword = requirePassword(body?.newPassword, "New password");
+  const isMatched = await user.comparePassword(oldPassword);
 
   if (!isMatched) {
     throw new ErrorHandler("Old password is incorrect", 400);
   }
 
-  user.password = body.newPassword;
+  user.password = newPassword;
   await user.save();
 
   return NextResponse.json({
@@ -64,7 +81,8 @@ export const uploadAvatar = catchAsyncErrors(async (req: NextRequest) => {
   await dbConnect({ throwOnError: true });
   const body = await req.json();
 
-  const avatarResponse = await upload_file(body?.avatar, "bookit/avatars");
+  const avatar = requireImageDataUrl(body?.avatar, "Avatar");
+  const avatarResponse = await upload_file(avatar, "bookit/avatars");
 
   if (req?.user?.avatar?.public_id) {
     await delete_file(req?.user?.avatar?.public_id);
@@ -83,10 +101,14 @@ export const forgotPassword = catchAsyncErrors(async (req: NextRequest) => {
   await dbConnect({ throwOnError: true });
   const body = await req.json();
 
-  const user = await User.findOne({ email: body.email });
+  const email = normalizeEmail(body?.email);
+  const user = await User.findOne({ email });
 
   if (!user) {
-    throw new ErrorHandler("User not found with this email", 404);
+    return NextResponse.json({
+      success: true,
+      message: "If an account exists, a password recovery email has been sent.",
+    });
   }
 
   const resetToken = user.getResetPasswordToken();
@@ -99,7 +121,7 @@ export const forgotPassword = catchAsyncErrors(async (req: NextRequest) => {
 
   try {
     await sendEmail({
-      email: user?.email,
+      email: user.email,
       subject: "Bookit Password Recovery",
       message,
     });
@@ -123,10 +145,16 @@ export const resetPassword = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { token: string } }) => {
     await dbConnect({ throwOnError: true });
     const body = await req.json();
+    const token = requireString(params?.token, "Reset token", 256);
+    const password = requirePassword(body?.password);
+    const confirmPassword = requirePassword(
+      body?.confirmPassword,
+      "Confirm password"
+    );
 
     const resetPasswordToken = crypto
       .createHash("sha256")
-      .update(params.token)
+      .update(token)
       .digest("hex");
 
     const user = await User.findOne({
@@ -141,11 +169,11 @@ export const resetPassword = catchAsyncErrors(
       );
     }
 
-    if (body.password !== body.confirmPassword) {
+    if (password !== confirmPassword) {
       throw new ErrorHandler("Password does not match", 400);
     }
 
-    user.password = body.password;
+    user.password = password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
 
@@ -190,12 +218,23 @@ export const updateUser = catchAsyncErrors(
     const body = await req.json();
 
     const newUserData = {
-      name: body.name,
-      email: body.email,
-      role: body.role,
+      name: requireString(body?.name, "Name", 30),
+      email: normalizeEmail(body?.email),
+      role: body?.role,
     };
 
-    const user = await User.findByIdAndUpdate(params.id, newUserData);
+    if (newUserData.role !== "user" && newUserData.role !== "admin") {
+      throw new ErrorHandler("Invalid user role", 400);
+    }
+
+    const user = await User.findByIdAndUpdate(params.id, newUserData, {
+      new: true,
+      runValidators: true,
+    }).select("-password").lean().exec();
+
+    if (!user) {
+      throw new ErrorHandler("User not found with this ID", 404);
+    }
 
     return NextResponse.json({
       user,

@@ -1,7 +1,6 @@
 import { deleteBooking } from "@/backend/controllers/bookingControllers";
-import { getToken } from "next-auth/jwt";
+import { requireAdmin } from "@/backend/middlewares/routeAuth";
 import { NextRequest, NextResponse } from "next/server";
-import { IUser } from "@/backend/models/user";
 
 interface RequestContext {
   params: {
@@ -13,12 +12,8 @@ export async function DELETE(
   request: NextRequest,
   ctx: RequestContext
 ): Promise<NextResponse> {
-  const session = await getToken({ req: request });
-  if (!session) {
-    return NextResponse.json({ message: "Login first to access this route" }, { status: 401 });
-  }
-
-  request.user = session.user as IUser;
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
   return await deleteBooking(request, ctx);
 }
 export const dynamic = "force-dynamic";

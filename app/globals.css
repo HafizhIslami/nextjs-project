@@ -31,65 +31,111 @@ body {
 
 /* Loader Main */
 
-.center-loader {
-  margin-left: auto;
-  margin-right: auto;
-  padding: 150px 0;
+.roomi-loading-screen {
+  align-items: center;
+  background:
+    radial-gradient(circle at center, rgba(255, 228, 236, 0.86), transparent 30%),
+    linear-gradient(180deg, #fffafb 0%, #fbfafb 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: calc(100svh - 76px);
+  padding: 2rem 0;
+  width: 100%;
 }
 
-.lds-ellipsis {
-  display: inline-block;
+.roomi-loader {
+  align-items: center;
+  display: flex;
+  height: 150px;
+  justify-content: center;
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: 150px;
 }
-.lds-ellipsis div {
-  position: absolute;
-  top: 33px;
-  width: 13px;
-  height: 13px;
+
+.roomi-loader-ring,
+.roomi-loader-halo {
   border-radius: 50%;
-  background: #ff799a;
-  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+  position: absolute;
 }
-.lds-ellipsis div:nth-child(1) {
-  left: 8px;
-  animation: lds-ellipsis1 0.6s infinite;
+
+.roomi-loader-ring {
+  animation: roomi-loader-spin 1.1s linear infinite;
+  border: 4px solid rgba(157, 23, 77, 0.14);
+  border-right-color: #9d174d;
+  border-top-color: #9d174d;
+  height: 128px;
+  width: 128px;
 }
-.lds-ellipsis div:nth-child(2) {
-  left: 8px;
-  animation: lds-ellipsis2 0.6s infinite;
+
+.roomi-loader-ring::after {
+  background: #9d174d;
+  border: 3px solid #fffafb;
+  border-radius: 50%;
+  content: "";
+  height: 13px;
+  position: absolute;
+  right: 4px;
+  top: 9px;
+  width: 13px;
 }
-.lds-ellipsis div:nth-child(3) {
-  left: 32px;
-  animation: lds-ellipsis2 0.6s infinite;
+
+.roomi-loader-halo {
+  animation: roomi-loader-pulse 1.8s ease-in-out infinite;
+  background: rgba(255, 228, 236, 0.72);
+  height: 100px;
+  width: 100px;
 }
-.lds-ellipsis div:nth-child(4) {
-  left: 56px;
-  animation: lds-ellipsis3 0.6s infinite;
+
+.roomi-loader-logo {
+  border-radius: 1rem;
+  box-shadow: 0 10px 28px rgba(103, 17, 47, 0.14);
+  height: 76px;
+  object-fit: cover;
+  position: relative;
+  width: 76px;
+  z-index: 1;
 }
-@keyframes lds-ellipsis1 {
-  0% {
-    transform: scale(0);
+
+.roomi-loader-copy {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+  text-align: center;
+}
+
+.roomi-loader-copy strong {
+  color: #19151a;
+  font-size: 1.05rem;
+}
+
+.roomi-loader-copy span {
+  color: #5d5660;
+  font-size: 0.9rem;
+}
+
+@keyframes roomi-loader-spin {
+  to {
+    transform: rotate(360deg);
   }
+}
+
+@keyframes roomi-loader-pulse {
+  0%,
   100% {
-    transform: scale(1);
+    opacity: 0.58;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
   }
 }
-@keyframes lds-ellipsis3 {
-  0% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(0);
-  }
-}
-@keyframes lds-ellipsis2 {
-  0% {
-    transform: translate(0, 0);
-  }
-  100% {
-    transform: translate(24px, 0);
+
+@media (prefers-reduced-motion: reduce) {
+  .roomi-loader-ring,
+  .roomi-loader-halo {
+    animation: none;
   }
 }
 
@@ -166,6 +212,8 @@ body {
   justify-content: center;
   align-items: center;
   margin-top: 5rem;
+  margin-left: 0;
+  margin-right: 0;
 
   font-weight: 700;
 }

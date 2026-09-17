@@ -2,52 +2,37 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useState } from "react";
-
-interface Props {
-  data: any;
-}
 
 const UserSidebar = () => {
 
   const pathName = usePathname()
   const menuItem = [
-    { name: "Update Profile", url: "/me/update", icon: "fas fa-user" },
+    { name: "Profile", url: "/me/update" },
     {
-      name: "Upload Avatar",
+      name: "Profile photo",
       url: "/me/upload_avatar",
-      icon: "fas fa-user-circle",
     },
     {
-      name: "Update Password",
+      name: "Password",
       url: "/me/update_password",
-      icon: "fas fa-lock",
     },
   ];
 
-  const [activeMenuItem, setActiveMenuItem] = useState(pathName);
-
-  const handleMenuItemClick = (name: string) => {
-    setActiveMenuItem(name);
-  };
-
   return (
-    <div className="list-group mt-5 pl-4">
-      {menuItem.map((item, index) => (
+    <nav className="list-group dashboard-nav" aria-label="Account settings sections">
+      {menuItem.map((item) => (
         <Link
-          key={index}
+          key={item.url}
           href={item.url}
           className={`fw-bold list-group-item list-group-item-action ${
-            activeMenuItem === item.url ? "active" : ""
+            pathName === item.url ? "active" : ""
           }`}
-          onClick={() => handleMenuItemClick(item.url)}
-          aria-current={activeMenuItem === item.url ? "true" : "false"}
+          aria-current={pathName === item.url ? "page" : undefined}
         >
-          <i className={`${item.icon} fa-fw pe-2`}></i>
           {item.name}
         </Link>
       ))}
-    </div>
+    </nav>
   );
 };
 

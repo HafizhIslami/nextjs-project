@@ -17,7 +17,7 @@ const ForgotPassword = () => {
     }
 
     if (isSuccess) {
-      toast.success("Password updated successfully");
+      toast.success("Password reset instructions were sent if the account exists");
     }
   }, [error, isSuccess]);
 
@@ -46,6 +46,8 @@ const ForgotPassword = () => {
               name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              required
             />
           </div>
 

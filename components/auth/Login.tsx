@@ -2,6 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import ButtonLoader from "../layout/ButtonLoader";
@@ -52,10 +53,12 @@ const Login = () => {
                 className="form-control"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                required
               />
             </div>
 
-            <div className="mb-3" style={{ position: "relative" }}>
+            <div className="mb-3 password-field">
               <label className="form-label" htmlFor="password_field">
                 Password
               </label>
@@ -65,27 +68,23 @@ const Login = () => {
                 className="form-control"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                style={{ paddingRight: "2.5rem" }} // Space for the eye icon
+                autoComplete="current-password"
+                required
               />
-              <i
+              <button
+                type="button"
                 onClick={togglePasswordVisibility}
-                className={`${
-                  showPassword ? "fa-solid fa-eye-slash" : "fa-solid fa-eye"
-                } fa-fw`}
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  top: "75%",
-                  transform: "translateY(-50%)",
-                  cursor: "pointer",
-                  color: "#888",
-                }}
-              />
+                className="password-toggle"
+                aria-pressed={showPassword}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
             </div>
 
-            <a href="/password/forgot" className="float-end mt-2">
+            <Link href="/password/forgot" className="float-end mt-2">
               Forgot Password?
-            </a>
+            </Link>
 
             <button
               id="login_button"
@@ -97,10 +96,9 @@ const Login = () => {
             </button>
 
             <div className="mt-3 mb-4">
-              <a href="/register" className="float-end">
-                {" "}
-                New User? Register Here{" "}
-              </a>
+              <Link href="/register" className="float-end">
+                New user? Create an account
+              </Link>
             </div>
           </form>
         </div>

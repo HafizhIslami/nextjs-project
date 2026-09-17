@@ -38,7 +38,7 @@ const Invoice = ({ data }: Props) => {
             className="btn btn-success col-md-5"
             onClick={downloadHandler}
           >
-            <i className="fa fa-print"></i> Download Invoice
+            Download invoice
           </button>
         </div>
         <div className="px-5">

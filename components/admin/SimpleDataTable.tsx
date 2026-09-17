@@ -2,18 +2,21 @@
 
 import React from "react";
 
-type Column = {
+export type DataTableColumn = {
   label: string;
   field: string;
+  sort?: "asc" | "desc";
 };
 
-type Row = Record<string, React.ReactNode>;
+export type DataTableRow = Record<string, React.ReactNode>;
+
+export interface DataTableData {
+  columns: DataTableColumn[];
+  rows: DataTableRow[];
+}
 
 interface Props {
-  data: {
-    columns: Column[];
-    rows: Row[];
-  };
+  data: DataTableData;
   className?: string;
 }
 
