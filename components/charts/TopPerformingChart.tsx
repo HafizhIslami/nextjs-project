@@ -18,7 +18,7 @@ export function TopPerformingChart({ rooms }: Props) {
     labels: rooms?.map((room) => room?.roomName),
     datasets: [
       {
-        label: "# of Bookings",
+        label: "# of Transactions",
         data: rooms?.map((room) => room?.bookingsCount),
         backgroundColor: [
           "rgba(255, 99, 132, 0.2)",
@@ -39,12 +39,12 @@ export function TopPerformingChart({ rooms }: Props) {
       <Doughnut
         data={data}
         role="img"
-        aria-label="Bookings by top performing room"
+        aria-label="Transactions by top performing offering"
       />
       <figcaption className="visually-hidden">
         {rooms?.map((room) => (
           <span key={room.roomName}>
-            {room.roomName}: {room.bookingsCount} bookings. {" "}
+            {room.roomName}: {room.bookingsCount} transactions. {" "}
           </span>
         ))}
       </figcaption>

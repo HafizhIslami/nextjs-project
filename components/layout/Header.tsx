@@ -8,12 +8,16 @@ import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect } from "react";
+import { useState } from "react";
 import roomiLogo from "../../public/images/roomi_header_small.png";
+import type { TenantContext } from "@/backend/tenancy/tenantContext";
 
-const Header = () => {
+const Header = ({ tenant }: { tenant?: TenantContext }) => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { data, status } = useSession();
+  const [canManageMerchant, setCanManageMerchant] = useState(false);
+  const [canManagePlatform, setCanManagePlatform] = useState(false);
 
   useEffect(() => {
     if (data) {
@@ -25,6 +29,22 @@ const Header = () => {
     }
   }, [data, dispatch, status]);
 
+  useEffect(() => {
+    if (!data?.user) {
+      setCanManageMerchant(false);
+      setCanManagePlatform(false);
+      return;
+    }
+    fetch("/api/merchant/me")
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload) => setCanManageMerchant(Boolean(payload?.membership)))
+      .catch(() => setCanManageMerchant(false));
+    fetch("/api/platform/me")
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload) => setCanManagePlatform(Boolean(payload?.membership)))
+      .catch(() => setCanManagePlatform(false));
+  }, [data]);
+
   const logoutHandler = async () => {
     await signOut({ callbackUrl: "/" });
   };
@@ -32,26 +52,39 @@ const Header = () => {
   return (
     <header className="site-header sticky-top">
       <nav className="container header-nav" aria-label="Primary navigation">
-        <Link href="/" className="brand-link" aria-label="Roomi home">
-          <Image
-            src={roomiLogo}
-            alt="Roomi"
-            width={190}
-            priority
-            className="brand-logo"
-          />
+        <Link href="/" className="brand-link" aria-label={`${tenant?.name || "Roomi"} home`}>
+          {tenant?.branding.logoUrl ? (
+            <Image
+              src={tenant.branding.logoUrl}
+              alt={tenant.name}
+              width={190}
+              height={52}
+              priority
+              className="brand-logo"
+            />
+          ) : tenant ? (
+            <span className="brand-wordmark">{tenant.name}</span>
+          ) : (
+            <Image
+              src={roomiLogo}
+              alt="Roomi"
+              width={190}
+              priority
+              className="brand-logo"
+            />
+          )}
         </Link>
 
         <div className="header-actions">
           <Link href="/search" className="header-browse-link">
-            Browse stays
+            Browse {tenant?.enabledModules.includes("rental") ? "stays" : "catalog"}
           </Link>
 
           {status === "loading" ? (
             <div className="account-skeleton" aria-label="Loading account" />
           ) : user ? (
             <details className="account-menu">
-              <summary>
+              <summary aria-label={`${user.name} account menu`}>
                 <Image
                   src={normalizeImageUrl(
                     user.avatar?.url,
@@ -70,7 +103,10 @@ const Header = () => {
                 </span>
               </summary>
               <div className="account-panel">
-                {user.role === "admin" && (
+                {canManagePlatform && (
+                  <Link href="/platform">Platform console</Link>
+                )}
+                {canManageMerchant && (
                   <Link href="/admin/dashboard">Admin dashboard</Link>
                 )}
                 <Link href="/bookings/me">My bookings</Link>

@@ -1,6 +1,7 @@
 import RoomDetails from "@/components/room/RoomDetails";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { getServerApiUrl, getTenantForwardHeaders } from "@/helpers/serverTenantRequest";
 
 export const dynamic = "force-dynamic";
 
@@ -11,8 +12,9 @@ interface Props {
 }
 
 const getRoom = cache(async (id: string) => {
-  const res = await fetch(`${process.env.API_URL}/api/rooms/${id}`, {
+  const res = await fetch(getServerApiUrl(`/api/rooms/${id}`), {
     cache: "no-store",
+    headers: getTenantForwardHeaders(),
   });
   return res.json();
 });

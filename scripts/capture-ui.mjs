@@ -30,6 +30,8 @@ try {
   await desktop.waitForURL("http://127.0.0.1:3100/");
   await desktop.goto("http://127.0.0.1:3100/admin/dashboard", { waitUntil: "networkidle" });
   await desktop.screenshot({ path: path.join(outputDirectory, "dashboard-desktop.png"), fullPage: true });
+  await desktop.goto("http://127.0.0.1:3100/platform", { waitUntil: "networkidle" });
+  await desktop.screenshot({ path: path.join(outputDirectory, "platform-desktop.png"), fullPage: true });
 
   const mobile = await browser.newPage({
     viewport: { width: 390, height: 844 },

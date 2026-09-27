@@ -1,12 +1,14 @@
 import Error from "@/app/error";
 import UploadRoomImages from "@/components/admin/UploadRoomImages";
+import { getServerApiUrl, getTenantForwardHeaders } from "@/helpers/serverTenantRequest";
 
 export const metadata = {
   title: "Upload Room Images - ADMIN",
 };
 
 const getRoom = async (id: string) => {
-  const res = await fetch(`${process.env.API_URL}/api/rooms/${id}`, {
+  const res = await fetch(getServerApiUrl(`/api/rooms/${id}`), {
+    headers: getTenantForwardHeaders(),
     next: {
       tags: ["RoomDetails"],
     },

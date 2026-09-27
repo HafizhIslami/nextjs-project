@@ -9,7 +9,6 @@ interface Props {
   room: IRoom;
 }
 const RoomItem = ({ room }: Props) => {
-  console.log("RoomItem room:", room); // Debugging line to check the room prop
   return (
     <article className="col-sm-12 col-md-6 col-lg-4 d-flex">
       <div className="room-card w-100">

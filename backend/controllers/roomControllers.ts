@@ -12,6 +12,8 @@ import {
   requireObjectId,
   requireString,
 } from "../utils/validation";
+import { requireTenantContext } from "../tenancy/requestTenant";
+import { tenantFilter } from "../tenancy/scope";
 
 const getRoomInput = (body: unknown) => {
   if (!body || typeof body !== "object") {
@@ -58,6 +60,7 @@ const getRoomInput = (body: unknown) => {
 export const allRooms = catchAsyncErrors(
   async (req: NextRequest) => {
     await dbConnect({ throwOnError: true });
+    const tenant = await requireTenantContext(req);
     const resPerPage: number = /*Number(params.entries) ||*/ 6;
     const queryStr: Record<string, string> = {};
     const { searchParams } = new URL(req.url);
@@ -66,8 +69,9 @@ export const allRooms = catchAsyncErrors(
       queryStr[key] = val;
     });
 
-    const roomsCountPromise = Room.countDocuments().exec();
-    const apiFilters = new APIFilters(Room.find(), queryStr).search().filter();
+    const roomScope = tenantFilter(tenant);
+    const roomsCountPromise = Room.countDocuments(roomScope).exec();
+    const apiFilters = new APIFilters(Room.find(roomScope), queryStr).search().filter();
     const filteredRoomsCountPromise = apiFilters.query.clone().countDocuments().exec();
 
     apiFilters.pagination(resPerPage);
@@ -90,9 +94,11 @@ export const allRooms = catchAsyncErrors(
 // Create new room => /api/admin/rooms/:id
 export const newRoom = catchAsyncErrors(async (req: NextRequest) => {
   await dbConnect({ throwOnError: true });
+  const tenant = await requireTenantContext(req);
   const body = await req.json();
   const room = await Room.create({
     ...getRoomInput(body),
+    merchantId: tenant.merchantId,
     user: req.user._id,
   });
 
@@ -106,7 +112,9 @@ export const newRoom = catchAsyncErrors(async (req: NextRequest) => {
 export const getRoomDetail = catchAsyncErrors(
   async (request: NextRequest, { params }: { params: { id: string } }) => {
     await dbConnect({ throwOnError: true });
-    const room = await Room.findById(params.id)
+    const tenant = await requireTenantContext(request);
+    requireObjectId(params?.id, "room ID");
+    const room = await Room.findOne(tenantFilter(tenant, { _id: params.id }))
       .populate("reviews.user")
       .lean()
       .exec();
@@ -125,8 +133,9 @@ export const getRoomDetail = catchAsyncErrors(
 export const updateRoom = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
     await dbConnect({ throwOnError: true });
+    const tenant = await requireTenantContext(req);
     requireObjectId(params?.id, "room ID");
-    const room = await Room.findById(params.id);
+    const room = await Room.findOne(tenantFilter(tenant, { _id: params.id }));
     const body = await req.json();
 
     if (!room) {
@@ -147,7 +156,9 @@ export const updateRoom = catchAsyncErrors(
 export const uploadRoomImages = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
     await dbConnect({ throwOnError: true });
-    const room = await Room.findById(params.id);
+    const tenant = await requireTenantContext(req);
+    requireObjectId(params?.id, "room ID");
+    const room = await Room.findOne(tenantFilter(tenant, { _id: params.id }));
     const body = await req.json();
 
     if (!room) {
@@ -155,7 +166,7 @@ export const uploadRoomImages = catchAsyncErrors(
     }
 
     const uploader = async (image: string) =>
-      upload_file(image, "bookit/rooms");
+      upload_file(image, `roomi/${tenant.merchantId}/rooms`);
 
     const images = Array.isArray(body?.images) ? body.images : [];
     if (images.length === 0 || images.length > 10) {
@@ -182,7 +193,9 @@ export const uploadRoomImages = catchAsyncErrors(
 export const deleteRoomImage = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
     await dbConnect({ throwOnError: true });
-    const room = await Room.findById(params.id);
+    const tenant = await requireTenantContext(req);
+    requireObjectId(params?.id, "room ID");
+    const room = await Room.findOne(tenantFilter(tenant, { _id: params.id }));
     const body = await req.json();
 
     if (!room) {
@@ -218,7 +231,9 @@ export const deleteRoomImage = catchAsyncErrors(
 export const deleteRoom = catchAsyncErrors(
   async (request: NextRequest, { params }: { params: { id: string } }) => {
     await dbConnect({ throwOnError: true });
-    const room = await Room.findById(params.id);
+    const tenant = await requireTenantContext(request);
+    requireObjectId(params?.id, "room ID");
+    const room = await Room.findOne(tenantFilter(tenant, { _id: params.id }));
 
     if (!room) {
       return NextResponse.json({ message: "Room not found" }, { status: 404 });
@@ -235,6 +250,7 @@ export const deleteRoom = catchAsyncErrors(
 // Create room review => /api/reviews
 export const createRoomReview = catchAsyncErrors(async (req: NextRequest) => {
   await dbConnect({ throwOnError: true });
+  const tenant = await requireTenantContext(req);
   const body = await req.json();
   const roomId = requireObjectId(body?.roomId, "room ID");
   const rating = Number(body?.rating);
@@ -244,11 +260,11 @@ export const createRoomReview = catchAsyncErrors(async (req: NextRequest) => {
     throw new ErrorHandler("Rating must be between 1 and 5", 400);
   }
 
-  const completedBooking = await Booking.exists({
+  const completedBooking = await Booking.exists(tenantFilter(tenant, {
     user: req.user._id,
     room: roomId,
     checkOutDate: { $lt: new Date() },
-  });
+  }));
   if (!completedBooking) {
     throw new ErrorHandler("You can only review a completed booking", 403);
   }
@@ -259,7 +275,7 @@ export const createRoomReview = catchAsyncErrors(async (req: NextRequest) => {
     comment,
   };
 
-  const room = await Room.findById(roomId);
+  const room = await Room.findOne(tenantFilter(tenant, { _id: roomId }));
   if (!room) {
     throw new ErrorHandler("Room not found", 404);
   }
@@ -295,12 +311,13 @@ export const createRoomReview = catchAsyncErrors(async (req: NextRequest) => {
 // Check room's review allowance => /api/review/allow_review
 export const getAllowReview = catchAsyncErrors(async (request: NextRequest) => {
   await dbConnect({ throwOnError: true });
+  const tenant = await requireTenantContext(request);
   const { searchParams } = new URL(request.url);
   const roomId = requireObjectId(searchParams.get("roomId"), "room ID");
-  const bookings = await Booking.find({
+  const bookings = await Booking.find(tenantFilter(tenant, {
     user: request.user._id,
     room: roomId,
-  }).select({ checkOutDate: 1 }).lean().exec();
+  })).select({ checkOutDate: 1 }).lean().exec();
 
   const allowReview = bookings.find(
     (booking) => booking.checkOutDate < Date.now()
@@ -313,9 +330,10 @@ export const getAllowReview = catchAsyncErrors(async (request: NextRequest) => {
 
 // Get all room - ADMIN => /api/admin/rooms
 export const getAllRoomAdmin = catchAsyncErrors(
-  async () => {
+  async (request: NextRequest) => {
     await dbConnect({ throwOnError: true });
-    const rooms = await Room.find().lean().exec();
+    const tenant = await requireTenantContext(request);
+    const rooms = await Room.find(tenantFilter(tenant)).lean().exec();
 
     return NextResponse.json({
       rooms,
@@ -326,10 +344,11 @@ export const getAllRoomAdmin = catchAsyncErrors(
 // Get room reviews - ADMIN  =>  /api/admin/rooms/reviews
 export const getRoomReviews = catchAsyncErrors(async (req: NextRequest) => {
   await dbConnect({ throwOnError: true });
+  const tenant = await requireTenantContext(req);
   const { searchParams } = new URL(req.url);
 
   const roomId = requireObjectId(searchParams.get("roomId"), "room ID");
-  const room = await Room.findById(roomId)
+  const room = await Room.findOne(tenantFilter(tenant, { _id: roomId }))
     .select({ reviews: 1 })
     .lean()
     .exec();
@@ -346,12 +365,16 @@ export const getRoomReviews = catchAsyncErrors(async (req: NextRequest) => {
 // Delete room review - ADMIN  =>  /api/admin/rooms/reviews
 export const deleteRoomReview = catchAsyncErrors(async (req: NextRequest) => {
   await dbConnect({ throwOnError: true });
+  const tenant = await requireTenantContext(req);
   const { searchParams } = new URL(req.url);
 
   const roomId = requireObjectId(searchParams.get("roomId"), "room ID");
   const reviewId = requireObjectId(searchParams.get("id"), "review ID");
 
-  const room = await Room.findById(roomId).select({ reviews: 1 }).lean().exec();
+  const room = await Room.findOne(tenantFilter(tenant, { _id: roomId }))
+    .select({ reviews: 1 })
+    .lean()
+    .exec();
 
   if (!room) {
     throw new ErrorHandler("Room not found", 404);
@@ -371,7 +394,10 @@ export const deleteRoomReview = catchAsyncErrors(async (req: NextRequest) => {
           0
         ) / numOfReviews;
 
-  await Room.findByIdAndUpdate(roomId, { reviews, numOfReviews, ratings });
+  await Room.updateOne(
+    tenantFilter(tenant, { _id: roomId }),
+    { reviews, numOfReviews, ratings }
+  );
 
   return NextResponse.json({
     success: true,

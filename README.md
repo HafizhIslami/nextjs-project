@@ -1,5 +1,7 @@
 # Roomi
 
+Roomi supports hostname-based multi-tenant storefronts from a single deployment. See [Multi-tenant architecture and onboarding](docs/multi-tenant.md) for tenant isolation, migration, DNS, channels, and merchant provisioning.
+
 Roomi adalah aplikasi booking kamar full-stack berbasis Next.js App Router.
 Aplikasi ini menggunakan TypeScript, MongoDB/Mongoose, NextAuth, Redux
 Toolkit, Stripe, Cloudinary, Mapbox, Nodemailer, Bootstrap, Chart.js, dan
@@ -92,3 +94,6 @@ dipisahkan dari patch fase sebelumnya.
 Panduan lengkap untuk test fungsional, responsive styling, dan review performa
 tersedia di [docs/ui-testing.md](docs/ui-testing.md). UI test menggunakan
 `.env.test`, database `roomi_ui_test`, dan credential lokal khusus test.
+
+Panduan bootstrap platform owner dan checklist verifikasi manual tersedia di
+[docs/platform-console-manual-testing.md](docs/platform-console-manual-testing.md).

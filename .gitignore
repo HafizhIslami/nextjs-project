@@ -13,6 +13,7 @@
 /.playwright-browsers/
 /lighthouse-reports/
 /ui-review/
+/.mongo-test-data/
 
 # next.js
 /.next/
@@ -48,3 +49,4 @@ next-env.d.ts
 repomix*
 REVIEW.md
 build-errors.txt
+docs

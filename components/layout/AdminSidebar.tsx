@@ -16,16 +16,32 @@ const AdminSidebar = () => {
       url: "/admin/rooms",
     },
     {
+      name: "Offerings",
+      url: "/admin/offerings",
+    },
+    {
       name: "Bookings",
       url: "/admin/bookings",
+    },
+    {
+      name: "Orders",
+      url: "/admin/orders",
     },
     {
       name: "Users",
       url: "/admin/users",
     },
     {
+      name: "Customers",
+      url: "/admin/customers",
+    },
+    {
       name: "Reviews",
       url: "/admin/reviews",
+    },
+    {
+      name: "Merchant settings",
+      url: "/admin/settings",
     },
   ];
 

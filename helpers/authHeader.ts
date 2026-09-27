@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { getTenantForwardHeaders } from "./serverTenantRequest";
 
 export const getAuthCookieName = () =>
   process.env.NODE_ENV === "production"
@@ -14,6 +15,7 @@ export const getAuthHeader = () => {
   return {
     headers: {
       Cookie: `${nextAuthSessionToken?.name}=${nextAuthSessionToken?.value}`,
+      ...getTenantForwardHeaders(),
     },
   };
 };

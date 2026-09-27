@@ -1,6 +1,11 @@
 import Home from "@/components/Home";
 import ErrorPage from "./error";
 import { headers } from "next/headers";
+import { notFound } from "next/navigation";
+import { resolveTenantByHostname } from "@/backend/tenancy/tenantContext";
+import { getStorefrontCatalog } from "@/backend/services/catalogService";
+import StorefrontHome from "@/components/storefront/StorefrontHome";
+import { getTenantForwardHeaders } from "@/helpers/serverTenantRequest";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +49,7 @@ const getRooms = async (searchParams: SearchParams = {}) => {
 
     const res = await fetch(`${baseUrl}/api/rooms?${queryString}`, {
       cache: "no-cache",
+      headers: getTenantForwardHeaders(),
     });
 
     const contentType = res.headers.get("content-type") ?? "";
@@ -63,6 +69,18 @@ export default async function HomePage({
 }: {
   searchParams: SearchParams;
 }) {
+  const requestHeaders = headers();
+  const tenant = await resolveTenantByHostname(
+    requestHeaders.get("x-forwarded-host") || requestHeaders.get("host") || "localhost"
+  );
+  if (!tenant) notFound();
+
+  const catalog = await getStorefrontCatalog(tenant, "retail");
+  const defaultMerchantCode = process.env.DEFAULT_MERCHANT_CODE?.trim().toLowerCase() || "roomi";
+  if (catalog && (catalog.offerings.length > 0 || tenant.merchantCode !== defaultMerchantCode)) {
+    return <StorefrontHome tenant={tenant} catalog={catalog} />;
+  }
+
   const data = await getRooms(searchParams);
 
   if (data?.errMessage) {

@@ -37,19 +37,20 @@ const thresholds = {
 let failed = false;
 
 try {
-  for (const [name, route] of [
-    ["home", "/"],
-    ["search", "/search"],
-    ["login", "/login"],
+  for (const [name, url] of [
+    ["home", "http://127.0.0.1:3100/"],
+    ["search", "http://127.0.0.1:3100/search"],
+    ["login", "http://127.0.0.1:3100/login"],
+    ["merchant-home", "http://sayur-segar.localhost:3100/"],
   ]) {
-    const result = await lighthouse(`http://127.0.0.1:3100${route}`, {
+    const result = await lighthouse(url, {
       port: chrome.port,
       output: "json",
       logLevel: "error",
       onlyCategories: Object.keys(thresholds),
     });
 
-    if (!result) throw new Error(`Lighthouse returned no result for ${route}`);
+    if (!result) throw new Error(`Lighthouse returned no result for ${url}`);
     fs.writeFileSync(path.join(outputDirectory, `${name}.json`), result.report);
 
     const scores = Object.fromEntries(

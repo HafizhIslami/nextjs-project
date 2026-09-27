@@ -50,7 +50,7 @@ const Dashboard = () => {
       <div className="dashboard-section-heading">
         <div>
           <span className="eyebrow">Performance</span>
-          <h2>Booking overview</h2>
+          <h2>Sales overview</h2>
         </div>
       </div>
       <div className="dashboard-filter surface-card">
@@ -100,11 +100,11 @@ const Dashboard = () => {
 
         <section className="col-12 col-xl-5" aria-labelledby="top-rooms-heading">
           <div className="surface-card chart-card">
-          <h3 id="top-rooms-heading">Top performing rooms</h3>
+          <h3 id="top-rooms-heading">Top performers</h3>
           {data?.topThreeRooms != 0 ? (
             <TopPerformingChart rooms={data?.topThreeRooms} />
           ) : (
-            <p className="empty-chart">No bookings were found in this date range.</p>
+            <p className="empty-chart">No activity was found in this date range.</p>
           )}
           </div>
         </section>

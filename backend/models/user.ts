@@ -11,6 +11,9 @@ export interface IUser extends Document {
     url: string;
   };
   role: string;
+  accountStatus: "invited" | "active" | "suspended";
+  invitationToken?: string;
+  invitationExpire?: Date;
   createdAt: Date;
   resetPasswordToken: string;
   resetPasswordExpire: Date;
@@ -43,6 +46,14 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
     type: String,
     default: "user",
   },
+  accountStatus: {
+    type: String,
+    enum: ["invited", "active", "suspended"],
+    default: "active",
+    index: true,
+  },
+  invitationToken: { type: String, select: false },
+  invitationExpire: { type: Date, select: false },
   createdAt: {
     type: Date,
     default: Date.now,

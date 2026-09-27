@@ -66,14 +66,14 @@ export function SalesChart({ salesData }: Props) {
     labels: salesData?.map((data) => data.monthName).reverse(),
     datasets: [
       {
-        label: "Sales ($)",
+        label: "Sales",
         data: salesData?.map((data) => data.totalSales).reverse(),
         borderColor: "rgb(255, 99, 132)",
         backgroundColor: "rgba(255, 99, 132, 0.5)",
         yAxisID: "y",
       },
       {
-        label: "Bookings (Qty)",
+        label: "Transactions (Qty)",
         data: salesData?.map((data) => data.numOfBookings).reverse(),
         borderColor: "rgb(53, 162, 235)",
         backgroundColor: "rgba(53, 162, 235, 0.5)",
@@ -87,13 +87,13 @@ export function SalesChart({ salesData }: Props) {
         options={options}
         data={data}
         role="img"
-        aria-label="Sales and booking totals for the last six months"
+        aria-label="Sales and transaction totals for the last six months"
       />
       <figcaption className="visually-hidden">
         {salesData?.map((item) => (
           <span key={item.monthName}>
-            {item.monthName}: ${item.totalSales} in sales and {item.numOfBookings}{" "}
-            bookings. {" "}
+            {item.monthName}: {item.totalSales} in sales and {item.numOfBookings}{" "}
+            transactions. {" "}
           </span>
         ))}
       </figcaption>

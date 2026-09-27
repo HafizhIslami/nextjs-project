@@ -24,6 +24,7 @@ export interface ILocation {
 }
 
 export interface IRoom extends Document {
+  merchantId?: mongoose.Types.ObjectId;
   name: string;
   description: string;
   pricePerNight: number;
@@ -46,6 +47,12 @@ export interface IRoom extends Document {
 }
 
 const roomSchema: Schema<IRoom> = new mongoose.Schema({
+  merchantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Merchant",
+    required: false,
+    index: true,
+  },
   name: {
     type: String,
     required: [true, "Please enter room name"],
@@ -164,6 +171,9 @@ const roomSchema: Schema<IRoom> = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+roomSchema.index({ merchantId: 1, category: 1 });
+roomSchema.index({ merchantId: 1, createdAt: -1 });
 
 roomSchema.pre("save", async function () {
   if (!this.isModified("address")) {

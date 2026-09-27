@@ -3,6 +3,7 @@ import { IUser } from "./user";
 import { IRoom } from "./room";
 
 export interface IBooking extends Document {
+  merchantId?: mongoose.Types.ObjectId;
   room: IRoom;
   user: IUser;
   checkInDate: Date;
@@ -19,6 +20,12 @@ export interface IBooking extends Document {
 }
 
 const bookingSchema: Schema<IBooking> = new mongoose.Schema({
+  merchantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Merchant",
+    required: false,
+    index: true,
+  },
   room: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
@@ -69,6 +76,9 @@ const bookingSchema: Schema<IBooking> = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+bookingSchema.index({ merchantId: 1, room: 1, checkInDate: 1, checkOutDate: 1 });
+bookingSchema.index({ merchantId: 1, user: 1, createdAt: -1 });
 
 export default mongoose.models.Booking ||
   mongoose.model<IBooking>("Booking", bookingSchema);

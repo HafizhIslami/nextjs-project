@@ -7,6 +7,8 @@ import { resetPasswordHTMLTemplate } from "../utils/emailTemplates";
 import sendEmail from "../utils/sendEmail";
 import crypto from "crypto";
 import dbConnect from "../config/dbConnect";
+import { requireTenantContext } from "../tenancy/requestTenant";
+import { Customer, MerchantMember } from "../models/merchantIdentity";
 import {
   normalizeEmail,
   requireImageDataUrl,
@@ -42,7 +44,7 @@ export const updateProfile = catchAsyncErrors(async (req: NextRequest) => {
     email: normalizeEmail(body?.email),
   };
   const user = await User.findByIdAndUpdate(req.user._id, userData, {
-    new: true,
+    returnDocument: "after",
     runValidators: true,
   }).select("-password").lean().exec();
 
@@ -186,9 +188,21 @@ export const resetPassword = catchAsyncErrors(
 );
 
 // Get all users  =>  /api/admin/users
-export const allAdminUsers = catchAsyncErrors(async () => {
+export const allAdminUsers = catchAsyncErrors(async (request: NextRequest) => {
   await dbConnect({ throwOnError: true });
-  const users = await User.find().lean().exec();
+  const tenant = await requireTenantContext(request);
+
+  if (tenant.isLegacyFallback) {
+    const users = await User.find().lean().exec();
+    return NextResponse.json({ users });
+  }
+
+  const [customerUserIds, memberUserIds] = await Promise.all([
+    Customer.distinct("userId", { merchantId: tenant.merchantId, userId: { $ne: null } }),
+    MerchantMember.distinct("userId", { merchantId: tenant.merchantId }),
+  ]);
+  const userIds = Array.from(new Set([...customerUserIds, ...memberUserIds].map(String)));
+  const users = await User.find({ _id: { $in: userIds } }).lean().exec();
 
   return NextResponse.json({
     users,
@@ -199,7 +213,15 @@ export const allAdminUsers = catchAsyncErrors(async () => {
 export const getUserDetails = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
     await dbConnect({ throwOnError: true });
-    const user = await User.findById(params.id).lean().exec();
+    const tenant = await requireTenantContext(req);
+    const associations = tenant.isLegacyFallback
+      ? []
+      : await Promise.all([
+          Customer.exists({ merchantId: tenant.merchantId, userId: params.id }),
+          MerchantMember.exists({ merchantId: tenant.merchantId, userId: params.id }),
+        ]);
+    const canAccess = tenant.isLegacyFallback || associations.some(Boolean);
+    const user = canAccess ? await User.findById(params.id).lean().exec() : null;
 
     if (!user) {
       throw new ErrorHandler("User not found with this ID", 404);
@@ -215,6 +237,13 @@ export const getUserDetails = catchAsyncErrors(
 export const updateUser = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
     await dbConnect({ throwOnError: true });
+    const tenant = await requireTenantContext(req);
+    if (!tenant.isLegacyFallback) {
+      throw new ErrorHandler(
+        "Use merchant membership or customer management to update tenant roles.",
+        409
+      );
+    }
     const body = await req.json();
 
     const newUserData = {
@@ -228,7 +257,7 @@ export const updateUser = catchAsyncErrors(
     }
 
     const user = await User.findByIdAndUpdate(params.id, newUserData, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     }).select("-password").lean().exec();
 
@@ -246,6 +275,13 @@ export const updateUser = catchAsyncErrors(
 export const deleteUser = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
     await dbConnect({ throwOnError: true });
+    const tenant = await requireTenantContext(req);
+    if (!tenant.isLegacyFallback) {
+      throw new ErrorHandler(
+        "Removing a customer from a merchant must not delete their global account.",
+        409
+      );
+    }
     const user = await User.findById(params.id);
 
     if (!user) {

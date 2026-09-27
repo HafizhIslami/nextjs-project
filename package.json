@@ -18,7 +18,13 @@
     "ui:test:headed": "playwright test --headed",
     "ui:audit": "node --env-file=.env.test scripts/lighthouse-ui.mjs",
     "ui:capture": "node --env-file=.env.test scripts/capture-ui.mjs",
-    "ui:seed": "node --env-file=.env.test --import=tsx scripts/seed-ui.ts",
+    "ui:seed": "node --env-file=.env.test --import=tsx scripts/seed-ui.ts && node --env-file=.env.test --import=tsx scripts/seed-merchant-demo.ts",
+    "tenant": "npm run tenant:migrate && npm run tenant:demo",
+    "tenant:migrate": "node --env-file=.env.local --import=tsx scripts/migrate-multitenant.ts",
+    "tenant:demo": "node --env-file=.env.local --import=tsx scripts/seed-merchant-demo.ts",
+    "tenant:create": "node --env-file=.env.local --import=tsx scripts/create-merchant.ts",
+    "platform:bootstrap": "node --env-file=.env.local --import=tsx scripts/bootstrap-platform-owner.ts",
+    "orders:release-expired": "node --env-file=.env.local --import=tsx scripts/release-expired-orders.ts",
     "ui:install": "node --env-file=.env.test node_modules/playwright/cli.js install chromium",
     "audit:prod": "npm audit --omit=dev",
     "verify": "npm run lint && npm run typecheck && npm test && npm run build",
@@ -49,6 +55,7 @@
     "react-hot-toast": "^2.4.1",
     "react-js-pagination": "^3.0.2",
     "react-redux": "^9.1.2",
+    "sharp": "^0.35.4",
     "stripe": "^16.8.0"
   },
   "devDependencies": {

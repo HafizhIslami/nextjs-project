@@ -1,5 +1,5 @@
 import { allRooms, newRoom } from "@/backend/controllers/roomControllers";
-import { requireAdmin } from "@/backend/middlewares/routeAuth";
+import { requireMerchantAdmin } from "@/backend/middlewares/routeAuth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -7,7 +7,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-    const auth = await requireAdmin(request);
+    const auth = await requireMerchantAdmin(request);
     if (auth instanceof NextResponse) return auth;
     return await newRoom(request, {});
 }
