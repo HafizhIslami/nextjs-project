@@ -2,5 +2,6 @@ import { checkRoomBookingAvailability } from "@/backend/controllers/bookingContr
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  return checkRoomBookingAvailability(request, {});
+  return await checkRoomBookingAvailability(request, {});
 }
+export const dynamic = "force-dynamic";

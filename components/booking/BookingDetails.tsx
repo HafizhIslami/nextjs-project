@@ -2,9 +2,10 @@
 
 import { IBooking } from "@/backend/models/booking";
 import { useAppSelector } from "@/redux/hooks";
+import { normalizeImageUrl } from "@/helpers/imageUrl";
 import Link from "next/link";
 import React from "react";
-import { Image } from "react-bootstrap";
+import Image from "next/image";
 
 interface Props {
   data: {
@@ -15,25 +16,31 @@ interface Props {
 const BookingDetails = ({ data }: Props) => {
   const booking = data?.booking;
   const { user } = useAppSelector((state) => state.auth);
-  const isPaid = booking?.paymentInfo?.status == "paid" ? true : false;
+  const isPaid = booking?.paymentInfo?.status === "paid";
 
   return (
-    <div className="container">
+    <div className="container booking-details-page">
       <div className="row d-flex justify-content-center">
-        <div className="col-12 col-lg-9 mt-5 booking-details">
-          <div className="d-flex justify-content-between align-items-center my-5">
-            <h2>Booking # {booking._id?.toString()}</h2>
+        <div className="col-12 col-lg-9 booking-details">
+          <header className="booking-details-header">
+            <div>
+              <span className="eyebrow">Booking details</span>
+              <h1>{isPaid ? "Booking confirmed" : "Booking summary"}</h1>
+              <p className="booking-reference">Reference: {booking._id?.toString()}</p>
+            </div>
             <Link
               href={`/bookings/invoice/${booking._id?.toString()}`}
-              className="btn btn-success"
+              className="btn btn-secondary-roomi"
             >
-              <i className="fa fa-print"></i> Invoice
+              View invoice
             </Link>
-          </div>
+          </header>
 
-          <h4 className="mt-5 mb-4">User Info</h4>
-          <table className="table table-striped table-bordered">
-            <tbody>
+          <section className="booking-info-section">
+            <h2>Guest information</h2>
+            <div className="table-responsive">
+              <table className="table table-striped table-bordered">
+                <tbody>
               <tr>
                 <th scope="row">Name:</th>
                 <td>{booking?.user?.name}</td>
@@ -46,12 +53,16 @@ const BookingDetails = ({ data }: Props) => {
                 <th scope="row">Amount Paid:</th>
                 <td>{booking?.amountPaid.toString()}</td>
               </tr>
-            </tbody>
-          </table>
+                </tbody>
+              </table>
+            </div>
+          </section>
 
-          <h4 className="mt-5 mb-4">Booking Info</h4>
-          <table className="table table-striped table-bordered">
-            <tbody>
+          <section className="booking-info-section">
+            <h2>Stay information</h2>
+            <div className="table-responsive">
+              <table className="table table-striped table-bordered">
+                <tbody>
               <tr>
                 <th scope="row">Check In:</th>
                 <td>
@@ -68,16 +79,20 @@ const BookingDetails = ({ data }: Props) => {
                 <th scope="row">Days of Stay:</th>
                 <td>{booking?.daysOfStay.toString()}</td>
               </tr>
-            </tbody>
-          </table>
+                </tbody>
+              </table>
+            </div>
+          </section>
 
-          <h4 className="mt-5 mb-4">Payment Info:</h4>
-          <table className="table table-striped table-bordered">
-            <tbody>
+          <section className="booking-info-section">
+            <h2>Payment information</h2>
+            <div className="table-responsive">
+              <table className="table table-striped table-bordered">
+                <tbody>
               <tr>
                 <th scope="row">Status:</th>
                 <td>
-                  <b className={isPaid ? "greenColor" : "redColor"}>
+                  <b className={`status-badge ${isPaid ? "paid" : "unpaid"}`}>
                     {isPaid ? "Paid" : "Not Paid"}
                   </b>
                 </td>
@@ -90,43 +105,48 @@ const BookingDetails = ({ data }: Props) => {
                   </td>
                 </tr>
               )}
-            </tbody>
-          </table>
+                </tbody>
+              </table>
+            </div>
+          </section>
 
-          <h4 className="mt-5 mb-4">{booking?.room?.name}</h4>
-
-          <hr />
           {booking?.room ? (
-            <div className="cart-item my-1">
-              <div className="row my-5">
-                <div className="col-4 col-lg-2">
+            <section className="booked-room-card surface-card">
+              <div className="row align-items-center">
+                <div className="col-4 col-md-2">
                   <Image
-                    src={booking?.room?.images[0]?.url}
-                    alt={booking?.room?.name}
-                    height="45"
-                    width="65"
+                    src={normalizeImageUrl(
+                      booking.room.images[0]?.url,
+                      "/images/default_room_image.jpg"
+                    )}
+                    alt={`${booking?.room?.name} room`}
+                    height={96}
+                    width={128}
+                    className="booked-room-image"
                   />
                 </div>
 
-                <div className="col-5 col-lg-5">
+                <div className="col-8 col-md-5">
+                  <h2>
                   <Link href={`/rooms/${booking.room._id}`}>
                     {booking?.room?.name}
                   </Link>
+                  </h2>
+                  <p>{booking.room.address}</p>
                 </div>
 
-                <div className="col-4 col-lg-2 mt-4 mt-lg-0">
+                <div className="col-6 col-md-2 mt-3 mt-md-0">
                   <p>$ {booking.room.pricePerNight}</p>
                 </div>
 
-                <div className="col-4 col-lg-3 mt-4 mt-lg-0">
-                  <p>{booking.daysOfStay.toString()} Day(s)</p>
+                <div className="col-6 col-md-3 mt-3 mt-md-0">
+                  <p>{booking.daysOfStay.toString()} night(s)</p>
                 </div>
               </div>
-            </div>
+            </section>
           ) : (
             <div className="alert alert-danger">Room no longer exist</div>
           )}
-          <hr />
         </div>
       </div>
     </div>

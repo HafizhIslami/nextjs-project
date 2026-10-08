@@ -1,10 +1,20 @@
 import { deleteRoom, updateRoom } from "@/backend/controllers/roomControllers";
+import { requireAdmin } from "@/backend/middlewares/routeAuth";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function PUT(request: NextRequest): Promise<NextResponse> {
-    return updateRoom(request, {});
+interface RequestContext {
+    params: { id: string };
 }
 
-export async function DELETE(request: NextRequest): Promise<NextResponse> {
-    return deleteRoom(request, {});
+export async function PUT(request: NextRequest, ctx: RequestContext): Promise<NextResponse> {
+    const auth = await requireAdmin(request);
+    if (auth instanceof NextResponse) return auth;
+    return await updateRoom(request, ctx);
 }
+
+export async function DELETE(request: NextRequest, ctx: RequestContext): Promise<NextResponse> {
+    const auth = await requireAdmin(request);
+    if (auth instanceof NextResponse) return auth;
+    return await deleteRoom(request, ctx);
+}
+export const dynamic = "force-dynamic";

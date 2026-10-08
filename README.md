@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Roomi
 
-## Getting Started
+Roomi adalah aplikasi booking kamar full-stack berbasis Next.js App Router.
+Aplikasi ini menggunakan TypeScript, MongoDB/Mongoose, NextAuth, Redux
+Toolkit, Stripe, Cloudinary, Mapbox, Nodemailer, Bootstrap, Chart.js, dan
+jsPDF.
 
-First, run the development server:
+## Menjalankan secara lokal
+
+Prasyarat:
+
+- Node.js 24.x
+- npm
+- MongoDB lokal atau MongoDB Atlas
+
+Install dependency dan siapkan environment:
+
+```bash
+npm install
+cp .env.example .env.local
+```
+
+Windows PowerShell:
+
+```powershell
+npm install
+Copy-Item .env.example .env.local
+```
+
+Isi `.env.local` sesuai layanan yang digunakan. Minimal untuk login dan data
+lokal, siapkan `DB_LOCAL_URI`, `NEXTAUTH_URL`, dan `NEXTAUTH_SECRET`.
+Jangan commit `.env.local` atau nilai secret ke repository.
+
+Jalankan development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Perintah project
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+```bash
+npm run lint       # ESLint
+npm run typecheck  # TypeScript tanpa emit
+npm run build      # Production build
+npm run verify     # lint + typecheck + test + build
+npm run audit:prod # Audit dependency production
+npm run ui:install # Install Chromium untuk UI test
+npm run ui:seed    # Seed fixture ke database UI test
+npm run ui:test    # Jalankan UI test desktop dan mobile
+```
 
-## Learn More
+Seeder menggunakan `DB_LOCAL_URI` pada mode development dan `DB_URI` pada
+mode production:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run seeder
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Environment variables
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+Template lengkap tersedia di [.env.example](.env.example). Secret server
+seperti database, NextAuth, Stripe, Cloudinary, SMTP, geocoder, dan token
+revalidation harus disediakan melalui environment deployment. Hanya token
+yang memang bersifat publik, seperti `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`, yang
+boleh digunakan di client.
 
-## Deploy on Vercel
+Untuk pembayaran, konfigurasi endpoint Stripe webhook ke:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```text
+https://<host>/api/payment/webhook
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+## Checklist deployment
+
+1. Jalankan `npm ci` lalu `npm run verify`.
+2. Isi seluruh secret production melalui secret manager provider.
+3. Rotasi secret yang pernah terekspos sebelum deployment.
+4. Pastikan URL `API_URL`, `NEXTAUTH_URL`, dan Stripe webhook memakai host
+   production.
+5. Gunakan rate limiter terdistribusi pada deployment multi-instance.
+6. Pantau webhook Stripe, email SMTP, koneksi MongoDB, dan error server.
+
+`npm run audit:prod` masih melaporkan vulnerability yang memerlukan migrasi
+major Next.js dan pembaruan dependency indirect; migrasi tersebut sengaja
+dipisahkan dari patch fase sebelumnya.
+
+## UI testing
+
+Panduan lengkap untuk test fungsional, responsive styling, dan review performa
+tersedia di [docs/ui-testing.md](docs/ui-testing.md). UI test menggunakan
+`.env.test`, database `roomi_ui_test`, dan credential lokal khusus test.

@@ -2,7 +2,7 @@
 
 import { IRoom } from "@/backend/models/room";
 import { useDeleteRoomMutation } from "@/redux/api/roomApi";
-import SimpleDataTable from "./SimpleDataTable";
+import SimpleDataTable, { DataTableData } from "./SimpleDataTable";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
@@ -29,10 +29,10 @@ const AllRooms = ({ data }: Props) => {
       router.refresh();
       toast.success("Room deleted");
     }
-  }, [error, isSuccess]);
+  }, [error, isSuccess, router]);
 
   const setRooms = () => {
-    const data: { columns: any[]; rows: any[] } = {
+    const data: DataTableData = {
       columns: [
         {
           label: "Room ID",
@@ -55,30 +55,27 @@ const AllRooms = ({ data }: Props) => {
 
     rooms?.forEach((room) => {
       data?.rows?.push({
-        id: room._id,
+        id: room._id?.toString(),
         name: room.name,
         actions: (
-          <div className="row justify-content-center">
+          <div className="table-actions">
             <Link
               href={`/admin/rooms/${room._id}`}
-              className="btn btn-outline-primary m-1 col-auto"
+              className="btn btn-outline-primary btn-sm"
             >
-              {" "}
-              <i className="fa fa-pencil"></i>{" "}
+              Edit
             </Link>
             <Link
               href={`/admin/rooms/${room._id}/upload_images`}
-              className="btn btn-outline-success m-1 col-auto"
+              className="btn btn-outline-success btn-sm"
             >
-              {" "}
-              <i className="fa fa-images"></i>{" "}
+              Images
             </Link>
             <button
-              className="btn btn-outline-danger m-1 col-auto"
+              className="btn btn-outline-danger btn-sm"
               onClick={() => deleteRoomHandler(room?._id?.toString() ?? "")}
             >
-              {" "}
-              <i className="fa fa-trash"></i>{" "}
+              Delete
             </button>
           </div>
         ),
@@ -89,20 +86,24 @@ const AllRooms = ({ data }: Props) => {
   };
 
   const deleteRoomHandler = (id: string) => {
-    deleteRoom(id);
+    if (window.confirm("Delete this room? This action cannot be undone.")) {
+      deleteRoom(id);
+    }
   };
 
   return (
     <div>
-      <h1 className="my-5 position-relative">
+      <div className="resource-page-heading">
+      <h2>
         {`${rooms?.length} Room(s)`}
-        <Link
+      </h2>
+      <Link
           href="/admin/rooms/new"
-          className="mt-0 btn text-white position-absolute end-0 form-btn"
+          className="btn btn-primary-roomi"
         >
-          Create Room
+          Create room
         </Link>
-      </h1>
+      </div>
 
       <SimpleDataTable data={setRooms()} className="px-3" />
     </div>

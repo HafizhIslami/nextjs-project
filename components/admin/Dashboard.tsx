@@ -1,18 +1,29 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import DatePicker from "react-datepicker";
 import SalesStat from "./SalesStat";
-import { SalesChart } from "../charts/SalesCharts";
-import { TopPerformingChart } from "../charts/TopPerformingChart";
 import { useLazyGetSalesStatsQuery } from "@/redux/api/bookingApi";
 import toast from "react-hot-toast";
+
+const SalesChart = dynamic(
+  () => import("../charts/SalesCharts").then((module) => module.SalesChart),
+  { ssr: false, loading: () => <div className="chart-placeholder">Loading chart...</div> }
+);
+const TopPerformingChart = dynamic(
+  () =>
+    import("../charts/TopPerformingChart").then(
+      (module) => module.TopPerformingChart
+    ),
+  { ssr: false, loading: () => <div className="chart-placeholder">Loading chart...</div> }
+);
 
 const Dashboard = () => {
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
 
-  const [getSalesStats, { error, data, isLoading }] =
+  const [getSalesStats, { error, data }] =
     useLazyGetSalesStatsQuery();
 
   useEffect(() => {
@@ -25,7 +36,7 @@ const Dashboard = () => {
         endDate: endDate.toISOString(),
       });
     }
-  }, [error, data]);
+  }, [data, endDate, error, getSalesStats, startDate]);
 
   const submitHandler = () => {
     getSalesStats({
@@ -35,50 +46,68 @@ const Dashboard = () => {
   };
   
   return (
-    <div className="ps-4 my-5">
-      <div className="d-flex justify-content-start align-items-center">
-        <div className="mb-3 me-4">
-          <label className="form-label d-block">Start Date</label>
+    <div className="dashboard-overview">
+      <div className="dashboard-section-heading">
+        <div>
+          <span className="eyebrow">Performance</span>
+          <h2>Booking overview</h2>
+        </div>
+      </div>
+      <div className="dashboard-filter surface-card">
+        <div>
+          <label className="form-label d-block" htmlFor="sales_start_date">Start date</label>
           <DatePicker
+            id="sales_start_date"
             selected={startDate}
-            onChange={(date: any) => setStartDate(date)}
+            onChange={(date: Date | null) => {
+              if (date) setStartDate(date);
+            }}
             selectsStart
             startDate={startDate}
             endDate={endDate}
             className="form-control"
+            dateFormat="MMM d, yyyy"
           />
         </div>
-        <div className="mb-3 me-4">
-          <label className="form-label d-block">End Date</label>
+        <div>
+          <label className="form-label d-block" htmlFor="sales_end_date">End date</label>
           <DatePicker
+            id="sales_end_date"
             selected={endDate}
-            onChange={(date: any) => setEndDate(date)}
+            onChange={(date: Date | null) => {
+              if (date) setEndDate(date);
+            }}
             selectsEnd
             startDate={startDate}
             endDate={endDate}
             minDate={startDate}
             className="form-control"
+            dateFormat="MMM d, yyyy"
           />
         </div>
-        <button className="btn form-btn ms-4 mt-3 px-5" onClick={submitHandler}>
-          Fetch
+        <button className="btn btn-primary-roomi" onClick={submitHandler}>
+          Update report
         </button>
       </div>
       <SalesStat data={data} />
-      <div className="row m-auto">
-        <div className="col-12 col-lg-7">
-          <h4 className="my-5 text-center">Sales History</h4>
+      <div className="row dashboard-charts">
+        <section className="col-12 col-xl-7" aria-labelledby="sales-history-heading">
+          <div className="surface-card chart-card">
+          <h3 id="sales-history-heading">Sales history</h3>
           <SalesChart salesData={data?.sixMonthSalesData} />
-        </div>
+          </div>
+        </section>
 
-        <div className="col-12 col-lg-5 text-center">
-          <h4 className="my-5">Top Performing Rooms</h4>
+        <section className="col-12 col-xl-5" aria-labelledby="top-rooms-heading">
+          <div className="surface-card chart-card">
+          <h3 id="top-rooms-heading">Top performing rooms</h3>
           {data?.topThreeRooms != 0 ? (
             <TopPerformingChart rooms={data?.topThreeRooms} />
           ) : (
-            <h6 className="pt-5">There's no booking room at range of date</h6>
+            <p className="empty-chart">No bookings were found in this date range.</p>
           )}
-        </div>
+          </div>
+        </section>
       </div>
     </div>
   );

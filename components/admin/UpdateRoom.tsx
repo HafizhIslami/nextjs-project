@@ -1,12 +1,11 @@
 "use client";
 
-import { useNewRoomMutation, useUpdateRoomMutation } from "@/redux/api/roomApi";
+import { useUpdateRoomMutation } from "@/redux/api/roomApi";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import ButtonLoader from "../layout/ButtonLoader";
 import { IRoom } from "@/backend/models/room";
-import { revalidateTag } from "@/helpers/revalidate";
 
 interface Props {
   data: {
@@ -56,11 +55,10 @@ const UpdateRoom = ({ data }: Props) => {
     }
 
     if (isSuccess) {
-      revalidateTag("RoomDetails");
       router.refresh();
       toast.success("Room Updated");
     }
-  }, [error, isSuccess]);
+  }, [error, isSuccess, router]);
 
   const submitHandler = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -233,7 +231,7 @@ const UpdateRoom = ({ data }: Props) => {
           <label className="mb-3">Room Features</label>
 
           {roomFeatures?.map((feature) => (
-            <div className="form-check">
+            <div className="form-check" key={feature.value}>
               <input
                 className="form-check-input"
                 type="checkbox"

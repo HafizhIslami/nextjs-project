@@ -7,9 +7,9 @@ interface EmailOptions {
 }
 
 export default async function sendEmail(options: EmailOptions) {
-  var transport = nodemailer.createTransport({
+  const transport = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
+    port: Number(process.env.SMTP_PORT || 587),
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASSWORD,
@@ -17,7 +17,7 @@ export default async function sendEmail(options: EmailOptions) {
   });
   
   const message = {
-    from: `${process.env.FROM_NAME} <${process.env.FROM_EMAIL}>`,
+    from: `${process.env.SMTP_FROM_NAME} <${process.env.SMTP_FROM_EMAIL}>`,
     to: options.email,
     subject: options.subject,
     html: options.message,

@@ -2,10 +2,12 @@ import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { IUser } from "../models/user";
 
+type MiddlewareNext = () => unknown;
+
 export const isAuthenticatedUser = async (
   req: NextRequest,
-  event: any,
-  next: any
+  event: unknown,
+  next: MiddlewareNext
 ) => {
   const session = await getToken({ req });
   if (!session) {
@@ -20,7 +22,7 @@ export const isAuthenticatedUser = async (
 };
 
 export const authorizeRoles = (...roles: string[]) => {
-  return (req: NextRequest, event: any, next: any) => {
+  return (req: NextRequest, event: unknown, next: MiddlewareNext) => {
     if (!roles.includes(req.user.role)) {
       return NextResponse.json(
         {

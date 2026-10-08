@@ -50,7 +50,7 @@ const NewRoom = () => {
       router.push("/admin/rooms");
       toast.success("Room created");
     }
-  }, [error, isSuccess]);
+  }, [error, isSuccess, router]);
 
   const submitHandler = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -223,7 +223,7 @@ const NewRoom = () => {
           <label className="mb-3">Room Features</label>
 
           {roomFeatures?.map((feature) => (
-            <div className="form-check">
+            <div className="form-check" key={feature.value}>
               <input
                 className="form-check-input"
                 type="checkbox"

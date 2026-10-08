@@ -19,19 +19,20 @@ export async function GET(request: NextRequest, ctx: { params: { id: string } })
     const auth = await authenticate(request);
     if (auth instanceof NextResponse) return auth;
     request.user = auth;
-    return getUserDetails(request, ctx);
+    return await getUserDetails(request, ctx);
 }
 
 export async function PUT(request: NextRequest, ctx: { params: { id: string } }): Promise<NextResponse> {
     const auth = await authenticate(request);
     if (auth instanceof NextResponse) return auth;
     request.user = auth;
-    return updateUser(request, ctx);
+    return await updateUser(request, ctx);
 }
 
 export async function DELETE(request: NextRequest, ctx: { params: { id: string } }): Promise<NextResponse> {
     const auth = await authenticate(request);
     if (auth instanceof NextResponse) return auth;
     request.user = auth;
-    return deleteUser(request, ctx);
+    return await deleteUser(request, ctx);
 }
+export const dynamic = "force-dynamic";

@@ -5,10 +5,11 @@ import {
   useUploadRoomImagesMutation,
 } from "@/redux/api/roomApi";
 import { useRouter } from "next/navigation";
+import { normalizeImageUrl } from "@/helpers/imageUrl";
+import Image from "next/image";
 import React, { ChangeEventHandler, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import ButtonLoader from "../layout/ButtonLoader";
-import { revalidateTag } from "@/helpers/revalidate";
 
 interface Props {
   data: {
@@ -47,12 +48,11 @@ const UploadRoomImages = ({ data }: Props) => {
     }
 
     if (isSuccess) {
-      revalidateTag("RoomDetails");
       setImagesPreview([]);
       router.refresh();
       toast.success("Images Uploaded");
     }
-  }, [error, isSuccess]);
+  }, [error, isSuccess, router]);
 
   useEffect(() => {
     if (deleteError && "data" in deleteError) {
@@ -60,14 +60,25 @@ const UploadRoomImages = ({ data }: Props) => {
     }
 
     if (isDeleteSuccess) {
-      revalidateTag("RoomDetails");
       router.refresh();
       toast.success("Image Deleted");
     }
-  }, [deleteError, isDeleteSuccess]);
+  }, [deleteError, isDeleteSuccess, router]);
 
   const onChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     const files = Array.from(e.target.files || []);
+
+    if (
+      files.length === 0 ||
+      files.length > 10 ||
+      files.some(
+        (file) => !file.type.startsWith("image/") || file.size > 5 * 1024 * 1024
+      )
+    ) {
+      toast.error("Choose 1-10 images, each no larger than 5 MB");
+      e.target.value = "";
+      return;
+    }
 
     setImages([]);
     setImagesPreview([]);
@@ -93,6 +104,11 @@ const UploadRoomImages = ({ data }: Props) => {
     uploadRoomImages({ id: data?.room?._id, body: { images } });
   };
 
+  const formSubmitHandler = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    submitHandler();
+  };
+
   const removeImagePreview = (imgUrl: string) => {
     const filteredImagesPreview = imagesPreview.filter((img) => img != imgUrl);
 
@@ -113,7 +129,7 @@ const UploadRoomImages = ({ data }: Props) => {
   return (
     <div className="row wrapper">
       <div className="col-10 col-lg-7 mt-5 mt-lg-0">
-        <form className="shadow rounded bg-body">
+        <form className="shadow rounded bg-body" onSubmit={formSubmitHandler}>
           <h2 className="mb-4">Upload Room Images</h2>
 
           <div className="form-group">
@@ -141,13 +157,17 @@ const UploadRoomImages = ({ data }: Props) => {
                 <p className="text-warning">New Images:</p>
                 <div className="row mt-4">
                   {imagesPreview?.map((img) => (
-                    <div className="col-md-3 mt-2">
+                    <div className="col-md-3 mt-2" key={img}>
                       <div className="card">
-                        <img
+                        <Image
                           src={img}
                           alt="Img Preview"
                           className="card-img-top image-fluid p-2"
-                          style={{ width: "100%", height: "80px" }}
+                          width={300}
+                          height={80}
+                          sizes="(max-width: 768px) 100vw, 25vw"
+                          unoptimized
+                          style={{ width: "100%", height: "80px", objectFit: "cover" }}
                         />
                         <button
                           style={{
@@ -157,8 +177,9 @@ const UploadRoomImages = ({ data }: Props) => {
                           type="button"
                           className="btn btn-block btn-danger cross-button mt-1 py-0"
                           onClick={() => removeImagePreview(img)}
+                          aria-label="Remove image from upload list"
                         >
-                          <i className="fa fa-times"></i>
+                          Remove
                         </button>
                       </div>
                     </div>
@@ -172,13 +193,19 @@ const UploadRoomImages = ({ data }: Props) => {
                 <p className="text-success">Room Uploaded Images:</p>
                 <div className="row mt-1">
                   {uploadedImages?.map((img) => (
-                    <div className="col-md-3 mt-2">
+                    <div className="col-md-3 mt-2" key={img.public_id}>
                       <div className="card">
-                        <img
-                          src={img?.url}
-                          alt={img?.url}
+                        <Image
+                          src={normalizeImageUrl(
+                            img?.url,
+                            "/images/default_room_image.jpg"
+                          )}
+                          alt="Uploaded room preview"
                           className="card-img-top p-2"
-                          style={{ width: "100%", height: "80px" }}
+                          width={300}
+                          height={80}
+                          sizes="(max-width: 768px) 100vw, 25vw"
+                          style={{ width: "100%", height: "80px", objectFit: "cover" }}
                         />
                         <button
                           style={{
@@ -188,8 +215,9 @@ const UploadRoomImages = ({ data }: Props) => {
                           className="btn btn-block btn-danger cross-button mt-1 py-0"
                           onClick={() => handleImageDelete(img.public_id)}
                           disabled={isDeleteLoading || isLoading}
+                          aria-label="Delete uploaded room image"
                         >
-                          <i className="fa fa-trash"></i>
+                          Delete
                         </button>
                       </div>
                     </div>
@@ -203,7 +231,6 @@ const UploadRoomImages = ({ data }: Props) => {
             id="register_button"
             type="submit"
             className="btn form-btn w-100 py-2"
-            onClick={submitHandler}
             disabled={isLoading || isDeleteLoading}
           >
             {isLoading ? <ButtonLoader /> : "Upload"}

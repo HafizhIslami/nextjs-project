@@ -6,7 +6,9 @@ import {
 } from "@/redux/api/userApi";
 import { setUser } from "@/redux/features/userSlice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { normalizeImageUrl } from "@/helpers/imageUrl";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import ButtonLoader from "../layout/ButtonLoader";
@@ -27,11 +29,13 @@ const UploadAvatar = () => {
 
   const [updateSession, { data }] = useLazyUpdateSessionQuery();
 
-  if (data) dispatch(setUser(data?.user));
-
   useEffect(() => {
-    if (user.avatar) {
-      setAvatarPreview(user.avatar);
+    if (data) dispatch(setUser(data.user));
+
+    if (user?.avatar?.url) {
+      setAvatarPreview(
+        normalizeImageUrl(user.avatar.url, "/images/default_avatar.jpg")
+      );
     }
 
     if (error && "data" in error) {
@@ -40,11 +44,10 @@ const UploadAvatar = () => {
 
     if (isSuccess) {
       toast.success("Profile updated successfully");
-      // @ts-ignore
-      updateSession();
+      updateSession(undefined);
       router.refresh();
     }
-  }, [user, error, isSuccess]);
+  }, [data, dispatch, error, isSuccess, router, updateSession, user]);
 
   const submitHandler = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -55,6 +58,14 @@ const UploadAvatar = () => {
 
   const changeHandler: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const files = Array.from(e.target.files || []);
+    const file = files[0];
+
+    if (!file) return;
+    if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) {
+      toast.error("Choose an image no larger than 5 MB");
+      e.target.value = "";
+      return;
+    }
 
     const reader = new FileReader();
 
@@ -65,7 +76,7 @@ const UploadAvatar = () => {
       }
     };
 
-    reader.readAsDataURL(files[0]);
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -78,10 +89,14 @@ const UploadAvatar = () => {
             <div className="d-flex align-items-center">
               <div className="me-3">
                 <figure className="avatar item-rtl">
-                  <img
+                  <Image
                     src={avatarPreview}
                     className="rounded-circle"
                     alt="image"
+                    width={100}
+                    height={100}
+                    sizes="100px"
+                    unoptimized
                   />
                 </figure>
               </div>
@@ -94,7 +109,7 @@ const UploadAvatar = () => {
                   name="avatar"
                   className="form-control"
                   id="customFile"
-                  accept="images/*"
+                  accept="image/*"
                   onChange={changeHandler}
                 />
               </div>

@@ -11,6 +11,10 @@ export default defineConfig([
   {
     ignores: [
       ".next/**",
+      ".playwright-browsers/**",
+      "playwright-report/**",
+      "test-results/**",
+      "lighthouse-reports/**",
       "node_modules/**",
       "out/**",
       "next-env.d.ts",

@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema, ObjectId } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 import { IUser } from "./user";
 import geoCoder from "../utils/geoCoder";
 
@@ -165,18 +165,25 @@ const roomSchema: Schema<IRoom> = new mongoose.Schema({
   },
 });
 
-roomSchema.pre("save", async function (next) {
+roomSchema.pre("save", async function () {
+  if (!this.isModified("address")) {
+    return;
+  }
+
   const loc = await geoCoder.geocode(this.address);
-  // console.log("location", loc);
+
+  if (!loc?.[0]?.longitude || !loc?.[0]?.latitude) {
+    throw new Error("Unable to geocode room address");
+  }
 
   this.location = {
     type: "Point",
     coordinates: [loc[0].longitude, loc[0].latitude],
-    formattedAddress: loc[0].formattedAddress,
-    city: loc[0].city,
-    state: loc[0].stateCode,
-    zipcode: loc[0].zipcode,
-    country: loc[0].countryCode,
+    formattedAddress: loc[0].formattedAddress ?? this.address,
+    city: loc[0].city ?? "",
+    state: loc[0].stateCode ?? "",
+    zipcode: loc[0].zipcode ?? "",
+    country: loc[0].countryCode ?? "",
   };
 });
 

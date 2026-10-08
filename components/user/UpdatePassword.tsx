@@ -30,7 +30,7 @@ const UpdatePassword = () => {
       toast.success("Password updated successfully");
       router.refresh();
     }
-  }, [error, isSuccess]);
+  }, [error, isSuccess, router]);
 
   const submitHandler = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -50,7 +50,7 @@ const UpdatePassword = () => {
         <form className="shadow rounded bg-body" onSubmit={submitHandler}>
           <h2 className="mb-4">Change Password</h2>
 
-          <div className="mb-3" style={{ position: "relative" }}>
+          <div className="mb-3 password-field">
             <label className="form-label" htmlFor="old_password_field">
               Old Password
             </label>
@@ -61,22 +61,18 @@ const UpdatePassword = () => {
               name="oldPassword"
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
+              autoComplete="current-password"
               required
             />
-            <i
+            <button
+              type="button"
               onClick={togglePasswordVisibility}
-              className={`${
-                showPassword ? "fa-solid fa-eye-slash" : "fa-solid fa-eye"
-              } fa-fw`}
-              style={{
-                position: "absolute",
-                right: "10px",
-                top: "75%",
-                transform: "translateY(-50%)",
-                cursor: "pointer",
-                color: "#888",
-              }}
-            />
+              className="password-toggle"
+              aria-pressed={showPassword}
+              aria-label={showPassword ? "Hide old password" : "Show old password"}
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
           </div>
 
           <div className="mb-3">
@@ -90,12 +86,14 @@ const UpdatePassword = () => {
               name="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
+              autoComplete="new-password"
+              minLength={6}
               required
             />
           </div>
 
           <div className="mb-3">
-            <label className="form-label" htmlFor="new_password_field">
+            <label className="form-label" htmlFor="confirm_new_password_field">
               Confirm New Password
             </label>
             <input
@@ -107,9 +105,12 @@ const UpdatePassword = () => {
               name="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              autoComplete="new-password"
+              minLength={6}
+              aria-describedby="confirm_password_feedback"
               required
             />
-            <div className="invalid-feedback">
+            <div className="invalid-feedback" id="confirm_password_feedback">
               Please rewrite your new password correctly.
             </div>
           </div>

@@ -2,7 +2,7 @@
 
 import { IUser } from "@/backend/models/user";
 import { useDeleteUserMutation } from "@/redux/api/userApi";
-import SimpleDataTable from "./SimpleDataTable";
+import SimpleDataTable, { DataTableData } from "./SimpleDataTable";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
@@ -30,10 +30,10 @@ const AllUsers = ({ data }: Props) => {
       router.refresh();
       toast.success("User deleted");
     }
-  }, [error, isSuccess]);
+  }, [error, isSuccess, router]);
 
   const setUsers = () => {
-    const data: { columns: any[]; rows: any[] } = {
+    const data: DataTableData = {
       columns: [
         {
           label: "ID",
@@ -66,26 +66,25 @@ const AllUsers = ({ data }: Props) => {
 
     users?.forEach((user) => {
       data?.rows?.push({
-        id: user._id,
+        id: user._id?.toString(),
         name: user?.name,
         email: user?.email,
         role: user?.role,
         actions: (
-          <div className="row justify-content-center">
+          <div className="table-actions">
             <Link
               href={`/admin/users/${user._id}`}
-              className="btn btn-outline-primary m-1 col-auto"
+              className="btn btn-outline-primary btn-sm"
             >
-              {" "}
-              <i className="fa fa-pencil"></i>{" "}
+              Edit
             </Link>
 
             <button
-              className="btn btn-outline-danger m-1 col-auto"
+              className="btn btn-outline-danger btn-sm"
               disabled={isLoading}
               onClick={() => deleteUserHandler(user?._id?.toString() ?? "")}
             >
-              <i className="fa fa-trash"></i>
+              Delete
             </button>
           </div>
         ),
@@ -96,12 +95,14 @@ const AllUsers = ({ data }: Props) => {
   };
 
   const deleteUserHandler = (id: string) => {
-    deleteUser(id);
+    if (window.confirm("Delete this user? This action cannot be undone.")) {
+      deleteUser(id);
+    }
   };
 
   return (
     <div className="container">
-      <h1 className="my-5">{users?.length} User(s)</h1>
+      <h2 className="resource-title">{users?.length} User(s)</h2>
       <SimpleDataTable data={setUsers()} className="px-3" />
     </div>
   );

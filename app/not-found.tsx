@@ -3,20 +3,16 @@ import React from "react";
 
 const NotFound = () => {
   return (
-    <>
-      <div className="d-flex align-items-center justify-content-center vh-100">
-        <div className="text-center">
-          <h1 className="display-1 fw-bold">404</h1>
-          <p className="fs-3">
-            <span className="text-danger">Oops!</span> Page not found.
-          </p>
-          <p className="lead">The page you are looking for does not exist.</p>
-          <Link href="/" className="btn btn-primary">
-            Go Home
+    <section className="feedback-page">
+      <div className="feedback-card">
+          <span className="eyebrow">404 error</span>
+          <h1>That page is not available</h1>
+          <p>The link may be outdated, or the page may have moved.</p>
+          <Link href="/" className="btn btn-primary-roomi">
+            Return home
           </Link>
-        </div>
       </div>
-    </>
+    </section>
   );
 };
 

@@ -4,28 +4,49 @@ import bcrypt from "bcryptjs";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { NextRequest } from "next/server";
+import { enforceRateLimit } from "@/backend/utils/rateLimit";
 
-
-type Credentials = {
-  email: string;
-  password: string;
-};
 
 type Token = {
   user: IUser;
 };
 
-async function auth(req: NextRequest, res: any) {
+type RouteHandlerContext = {
+  params: { nextauth: string[] } | Promise<{ nextauth: string[] }>;
+};
+
+async function auth(req: NextRequest, res: RouteHandlerContext) {
+  if (
+    req.method === "POST" &&
+    req.nextUrl.pathname.endsWith("/callback/credentials")
+  ) {
+    const rateLimitResponse = enforceRateLimit(req, "auth:login", {
+      limit: 10,
+      windowMs: 15 * 60 * 1000,
+    });
+    if (rateLimitResponse) return rateLimitResponse;
+  }
+
+  await dbConnect({ throwOnError: true });
   return await NextAuth(req, res, {
     session: {
       strategy: "jwt",
     },
     providers: [
       CredentialsProvider({
-        // @ts-ignore
-        async authorize(credentials: Credentials) {
-                    const { email, password } = credentials;
-          const user = await User.findOne({ email }).select("+password");
+        credentials: {
+          email: { label: "Email", type: "email" },
+          password: { label: "Password", type: "password" },
+        },
+        async authorize(credentials) {
+          await dbConnect({ throwOnError: true });
+          if (!credentials?.email || !credentials?.password) {
+            return null;
+          }
+
+          const email = credentials.email.trim().toLowerCase();
+          const password = credentials.password;
+          const user = await User.findOne({ email }).select("+password").exec();
 
           if (!user) {
             throw new Error("Invalid email or password");
@@ -37,27 +58,31 @@ async function auth(req: NextRequest, res: any) {
             throw new Error("Invalid email or password");
           }
 
-          return user;
+          const safeUser = user.toObject();
+          delete (safeUser as { password?: string }).password;
+          return safeUser;
         },
       }),
     ],
     callbacks: {
       jwt: async ({ token, user }) => {
         const jwtToken = token as Token;
-        user && (token.user = user);
+        if (user) {
+          token.user = user;
+        }
 
         if (req.url?.includes("/api/auth/session?update")) {
-          const updatedUser = await User.findById(jwtToken?.user?._id);
+          const updatedUser = await User.findById(jwtToken?.user?._id).lean().exec();
           token.user = updatedUser;
         }
 
         return token;
       },
       session: async ({ session, token }) => {
-        token && (session.user = token.user as IUser);
+        if (token) {
+          session.user = token.user as IUser;
+        }
 
-        // @ts-ignore
-        delete session?.user?.password;
         // console.log("session", session);
         // console.log("token", token);        
         return session;
@@ -71,3 +96,4 @@ async function auth(req: NextRequest, res: any) {
 }
 
 export { auth as GET, auth as POST };
+export const dynamic = "force-dynamic";

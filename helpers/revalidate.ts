@@ -1,6 +1,15 @@
 export const revalidateTag = async (tag: string) => {
+  const apiUrl = process.env.API_URL;
+  const secret = process.env.REVALIDATE_TOKEN;
+
+  if (!apiUrl || !secret) return;
+
   await fetch(
-    `${process.env.API_URL}/api/revalidate?tag=${tag}&secret=${process.env.REVALIDATE_TOKEN}`,
-    { method: "POST" }
+    `${apiUrl}/api/revalidate?tag=${encodeURIComponent(tag)}`,
+    {
+      method: "POST",
+      headers: { "x-revalidate-secret": secret },
+      cache: "no-store",
+    }
   );
 };

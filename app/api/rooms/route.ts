@@ -1,14 +1,14 @@
 import { allRooms, newRoom } from "@/backend/controllers/roomControllers";
+import { requireAdmin } from "@/backend/middlewares/routeAuth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-    const ipRes = await fetch('https://api.ipify.org?format=json');
-    const ipData = await ipRes.json();
-    console.log('--- VERCEL OUTBOUND IP CURRENTLY USED ---', ipData.ip);
-
-    return allRooms(request, { params: { entries: "6" } });
+    return await allRooms(request, { params: { entries: "6" } });
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-    return newRoom(request, {});
+    const auth = await requireAdmin(request);
+    if (auth instanceof NextResponse) return auth;
+    return await newRoom(request, {});
 }
+export const dynamic = "force-dynamic";

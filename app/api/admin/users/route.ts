@@ -23,5 +23,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   request.user = user;
-  return allAdminUsers(request, {});
+  return await allAdminUsers(request, {});
 }
+export const dynamic = "force-dynamic";

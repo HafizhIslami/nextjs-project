@@ -8,5 +8,6 @@ interface RequestContext {
 }
 
 export async function GET(request: NextRequest, ctx: RequestContext): Promise<NextResponse> {
-    return getRoomDetail(request, ctx);
+    return await getRoomDetail(request, ctx);
 }
+export const dynamic = "force-dynamic";

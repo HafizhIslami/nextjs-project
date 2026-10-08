@@ -6,13 +6,23 @@ import { delete_file, upload_file } from "../utils/cloudinary";
 import { resetPasswordHTMLTemplate } from "../utils/emailTemplates";
 import sendEmail from "../utils/sendEmail";
 import crypto from "crypto";
+import dbConnect from "../config/dbConnect";
+import {
+  normalizeEmail,
+  requireImageDataUrl,
+  requirePassword,
+  requireString,
+} from "../utils/validation";
 
 export const registerUser = catchAsyncErrors(async (req: NextRequest) => {
+  await dbConnect({ throwOnError: true });
   const body = await req.json();
 
-  const { name, email, password } = body;
+  const name = requireString(body?.name, "Name", 30);
+  const email = normalizeEmail(body?.email);
+  const password = requirePassword(body?.password);
 
-  const user = await User.create({
+  await User.create({
     name,
     email,
     password,
@@ -24,13 +34,17 @@ export const registerUser = catchAsyncErrors(async (req: NextRequest) => {
 });
 
 export const updateProfile = catchAsyncErrors(async (req: NextRequest) => {
+  await dbConnect({ throwOnError: true });
   const body = await req.json();
 
   const userData = {
-    name: body.name,
-    email: body.email,
+    name: requireString(body?.name, "Name", 30),
+    email: normalizeEmail(body?.email),
   };
-  const user = await User.findByIdAndUpdate(req.user._id, userData);
+  const user = await User.findByIdAndUpdate(req.user._id, userData, {
+    new: true,
+    runValidators: true,
+  }).select("-password").lean().exec();
 
   return NextResponse.json({
     success: true,
@@ -39,16 +53,23 @@ export const updateProfile = catchAsyncErrors(async (req: NextRequest) => {
 });
 
 export const updatePassword = catchAsyncErrors(async (req: NextRequest) => {
+  await dbConnect({ throwOnError: true });
   const body = await req.json();
 
   const user = await User.findById(req?.user?._id).select("+password");
-  const isMatched = await user.comparePassword(body.oldPassword);
+  if (!user) {
+    throw new ErrorHandler("User not found", 404);
+  }
+
+  const oldPassword = requirePassword(body?.oldPassword, "Old password");
+  const newPassword = requirePassword(body?.newPassword, "New password");
+  const isMatched = await user.comparePassword(oldPassword);
 
   if (!isMatched) {
     throw new ErrorHandler("Old password is incorrect", 400);
   }
 
-  user.password = body.newPassword;
+  user.password = newPassword;
   await user.save();
 
   return NextResponse.json({
@@ -57,15 +78,17 @@ export const updatePassword = catchAsyncErrors(async (req: NextRequest) => {
 });
 
 export const uploadAvatar = catchAsyncErrors(async (req: NextRequest) => {
+  await dbConnect({ throwOnError: true });
   const body = await req.json();
 
-  const avatarResponse = await upload_file(body?.avatar, "bookit/avatars");
+  const avatar = requireImageDataUrl(body?.avatar, "Avatar");
+  const avatarResponse = await upload_file(avatar, "bookit/avatars");
 
   if (req?.user?.avatar?.public_id) {
     await delete_file(req?.user?.avatar?.public_id);
   }
 
-  const user = await User.findByIdAndUpdate(req?.user?._id, {
+  await User.findByIdAndUpdate(req?.user?._id, {
     avatar: avatarResponse,
   });
 
@@ -75,12 +98,17 @@ export const uploadAvatar = catchAsyncErrors(async (req: NextRequest) => {
 });
 
 export const forgotPassword = catchAsyncErrors(async (req: NextRequest) => {
+  await dbConnect({ throwOnError: true });
   const body = await req.json();
 
-  const user = await User.findOne({ email: body.email });
+  const email = normalizeEmail(body?.email);
+  const user = await User.findOne({ email });
 
   if (!user) {
-    throw new ErrorHandler("User not found with this email", 404);
+    return NextResponse.json({
+      success: true,
+      message: "If an account exists, a password recovery email has been sent.",
+    });
   }
 
   const resetToken = user.getResetPasswordToken();
@@ -93,16 +121,19 @@ export const forgotPassword = catchAsyncErrors(async (req: NextRequest) => {
 
   try {
     await sendEmail({
-      email: user?.email,
+      email: user.email,
       subject: "Bookit Password Recovery",
       message,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
 
     await user.save();
-    throw new ErrorHandler(error.message, 500);
+    throw new ErrorHandler(
+      error instanceof Error ? error.message : "Unable to send password recovery email",
+      500
+    );
   }
 
   return NextResponse.json({
@@ -112,11 +143,18 @@ export const forgotPassword = catchAsyncErrors(async (req: NextRequest) => {
 
 export const resetPassword = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { token: string } }) => {
+    await dbConnect({ throwOnError: true });
     const body = await req.json();
+    const token = requireString(params?.token, "Reset token", 256);
+    const password = requirePassword(body?.password);
+    const confirmPassword = requirePassword(
+      body?.confirmPassword,
+      "Confirm password"
+    );
 
     const resetPasswordToken = crypto
       .createHash("sha256")
-      .update(params.token)
+      .update(token)
       .digest("hex");
 
     const user = await User.findOne({
@@ -131,11 +169,11 @@ export const resetPassword = catchAsyncErrors(
       );
     }
 
-    if (body.password !== body.confirmPassword) {
+    if (password !== confirmPassword) {
       throw new ErrorHandler("Password does not match", 400);
     }
 
-    user.password = body.password;
+    user.password = password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
 
@@ -148,8 +186,9 @@ export const resetPassword = catchAsyncErrors(
 );
 
 // Get all users  =>  /api/admin/users
-export const allAdminUsers = catchAsyncErrors(async (req: NextRequest) => {
-  const users = await User.find();
+export const allAdminUsers = catchAsyncErrors(async () => {
+  await dbConnect({ throwOnError: true });
+  const users = await User.find().lean().exec();
 
   return NextResponse.json({
     users,
@@ -159,7 +198,8 @@ export const allAdminUsers = catchAsyncErrors(async (req: NextRequest) => {
 // Get user details  =>  /api/admin/users/:id
 export const getUserDetails = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
-    const user = await User.findById(params.id);
+    await dbConnect({ throwOnError: true });
+    const user = await User.findById(params.id).lean().exec();
 
     if (!user) {
       throw new ErrorHandler("User not found with this ID", 404);
@@ -174,15 +214,27 @@ export const getUserDetails = catchAsyncErrors(
 // Update user details  =>  /api/admin/users/:id
 export const updateUser = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
+    await dbConnect({ throwOnError: true });
     const body = await req.json();
 
     const newUserData = {
-      name: body.name,
-      email: body.email,
-      role: body.role,
+      name: requireString(body?.name, "Name", 30),
+      email: normalizeEmail(body?.email),
+      role: body?.role,
     };
 
-    const user = await User.findByIdAndUpdate(params.id, newUserData);
+    if (newUserData.role !== "user" && newUserData.role !== "admin") {
+      throw new ErrorHandler("Invalid user role", 400);
+    }
+
+    const user = await User.findByIdAndUpdate(params.id, newUserData, {
+      new: true,
+      runValidators: true,
+    }).select("-password").lean().exec();
+
+    if (!user) {
+      throw new ErrorHandler("User not found with this ID", 404);
+    }
 
     return NextResponse.json({
       user,
@@ -193,6 +245,7 @@ export const updateUser = catchAsyncErrors(
 // Delete user  =>  /api/admin/users/:id
 export const deleteUser = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
+    await dbConnect({ throwOnError: true });
     const user = await User.findById(params.id);
 
     if (!user) {

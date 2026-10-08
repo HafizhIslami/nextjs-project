@@ -23,5 +23,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   request.user = user;
-  return allAdminBookings(request, {});
+  return await allAdminBookings(request, {});
 }
+export const dynamic = "force-dynamic";

@@ -1,48 +1,84 @@
 import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
 import { catchAsyncErrors } from "../middlewares/catchAsyncErrors";
 import Room from "../models/room";
-import { headers } from "next/headers";
 import User from "../models/user";
 import Booking from "../models/booking";
+import dbConnect from "../config/dbConnect";
+import ErrorHandler from "../utils/errorHandler";
+import { getRequiredEnv } from "../config/env";
+import { normalizeImageUrl } from "@/helpers/imageUrl";
+import {
+  parseStayDates,
+  requireObjectId,
+  requireString,
+} from "../utils/validation";
 
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const getStripe = () => new Stripe(getRequiredEnv("STRIPE_SECRET_KEY"));
 
 export const stripeCheckoutSession = catchAsyncErrors(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
+    await dbConnect({ throwOnError: true });
     const { searchParams } = new URL(req.url);
 
-    const checkInDate = searchParams.get("checkInDate");
-    const checkOutDate = searchParams.get("checkOutDate");
-    const daysOfStay = searchParams.get("daysOfStay");
-    const roomAmount = searchParams.get("amount");
+    const { checkInDate, checkOutDate, daysOfStay } = parseStayDates(
+      searchParams.get("checkInDate"),
+      searchParams.get("checkOutDate")
+    );
+    const roomId = requireObjectId(params?.id, "room ID");
 
-    const room = await Room.findById(params.id);
+    const room = await Room.findById(roomId).lean().exec();
 
+    if (!room) {
+      throw new ErrorHandler("Room not found", 404);
+    }
+
+    const conflictingBooking = await Booking.exists({
+      room: room._id,
+      checkInDate: { $lt: checkOutDate },
+      checkOutDate: { $gt: checkInDate },
+    });
+    if (conflictingBooking) {
+      throw new ErrorHandler("Room is not available for these dates", 409);
+    }
+
+    const totalAmount = room.pricePerNight * daysOfStay;
+    if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
+      throw new ErrorHandler("Invalid room price", 400);
+    }
+
+    const baseUrl = getRequiredEnv("API_URL").replace(/\/$/, "");
+    const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
         {
           price_data: {
             currency: "usd",
-            unit_amount: Number(roomAmount) * 100,
+            unit_amount: Math.round(totalAmount * 100),
             product_data: {
               name: room?.name,
               description: room?.description,
-              images: [`${room?.images[0]?.url}`],
+              images: [
+                normalizeImageUrl(
+                  room.images[0]?.url,
+                  `${baseUrl}/images/default_room_image.jpg`
+                ),
+              ],
             },
           },
           quantity: 1,
         },
       ],
       mode: "payment",
-      success_url: `${process.env.API_URL}/bookings/me`,
-      cancel_url: `${process.env.API_URL}/room/${room?._id}`,
+      success_url: `${baseUrl}/bookings/me`,
+      cancel_url: `${baseUrl}/rooms/${room?._id}`,
       customer_email: req?.user?.email,
-      client_reference_id: params?.id,
+      client_reference_id: roomId,
       metadata: {
-        checkInDate,
-        checkOutDate,
-        daysOfStay,
+        checkInDate: checkInDate.toISOString(),
+        checkOutDate: checkOutDate.toISOString(),
+        daysOfStay: String(daysOfStay),
       },
     });
 
@@ -50,51 +86,100 @@ export const stripeCheckoutSession = catchAsyncErrors(
   }
 );
 
-export const webhookCheckout = async (req: NextRequest) => {
-  try {
-    const rawBody = await req.text();
-    const signature = headers().get("Stripe-Signature");
-    const event = stripe.webhooks.constructEvent(
-      rawBody,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
+export const webhookCheckout = catchAsyncErrors(async (req: NextRequest) => {
+  await dbConnect({ throwOnError: true });
+  const stripe = getStripe();
+  const rawBody = await req.text();
+  const signature = req.headers.get("stripe-signature");
 
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object;
+  if (!signature) {
+    throw new ErrorHandler("Missing Stripe signature", 400);
+  }
 
-      const room = session.client_reference_id;
-      const user = (await User.findOne({ email: session?.customer_email })).id;
+  const event = stripe.webhooks.constructEvent(
+    rawBody,
+    signature,
+    getRequiredEnv("STRIPE_WEBHOOK_SECRET")
+  );
 
-      const amountPaid = session?.amount_total / 100;
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
 
-      const paymentInfo = {
-        id: session.payment_intent,
-        status: session.payment_status,
-      };
-
-      const checkInDate = session.metadata.checkInDate;
-      const checkOutDate = session.metadata.checkOutDate;
-      const daysOfStay = session.metadata.daysOfStay;
-
-      await Booking.create({
-        room,
-        user,
-        checkInDate,
-        checkOutDate,
-        daysOfStay,
-        amountPaid,
-        paymentInfo,
-        paidAt: Date.now(),
-      });
-
-      return NextResponse.json({ success: true });
-      // console.log("session => ", session);
+    if (session.payment_status !== "paid") {
+      return NextResponse.json({ success: true, message: "Payment is not completed" });
     }
 
-    return NextResponse.json({ success: false });
-  } catch (error: any) {
-    // console.log("Error in stripe checkout webhook => ", error);
-    return NextResponse.json({ errMessage: error?.message });
+    const roomId = requireObjectId(session.client_reference_id, "room ID");
+    const room = await Room.findById(roomId).select({ pricePerNight: 1 }).lean().exec();
+    if (!room) {
+      throw new ErrorHandler("Room not found for Stripe session", 404);
+    }
+
+    const checkInDateValue = requireString(
+      session.metadata?.checkInDate,
+      "Check-in date"
+    );
+    const checkOutDateValue = requireString(
+      session.metadata?.checkOutDate,
+      "Check-out date"
+    );
+    const { checkInDate, checkOutDate, daysOfStay } = parseStayDates(
+      checkInDateValue,
+      checkOutDateValue
+    );
+    const expectedAmount = Math.round(room.pricePerNight * daysOfStay * 100);
+    if (session.amount_total !== expectedAmount) {
+      throw new ErrorHandler("Stripe amount does not match room pricing", 400);
+    }
+
+    const paymentIntent = requireString(session.payment_intent, "Payment intent");
+    const customerEmail = requireString(session.customer_email, "Customer email").toLowerCase();
+    const userRecord = await User.findOne({ email: customerEmail })
+      .select({ _id: 1 })
+      .lean()
+      .exec();
+
+    if (!userRecord) {
+      throw new ErrorHandler("User not found for Stripe customer", 404);
+    }
+
+    const existingBooking = await Booking.exists({ stripeSessionId: session.id });
+    if (existingBooking) {
+      return NextResponse.json({ success: true, duplicate: true });
+    }
+
+    const conflictingBooking = await Booking.exists({
+      room: room._id,
+      checkInDate: { $lt: checkOutDate },
+      checkOutDate: { $gt: checkInDate },
+    });
+    if (conflictingBooking) {
+      throw new ErrorHandler("Room is no longer available for these dates", 409);
+    }
+
+    await Booking.findOneAndUpdate(
+      { stripeSessionId: session.id },
+      {
+        $setOnInsert: {
+          stripeSessionId: session.id,
+          room: room._id,
+          user: userRecord._id,
+          checkInDate,
+          checkOutDate,
+          daysOfStay,
+          amountPaid: expectedAmount / 100,
+          paymentInfo: {
+            id: paymentIntent,
+            status: session.payment_status,
+          },
+          paidAt: new Date(),
+        },
+      },
+      { upsert: true, runValidators: true }
+    );
+
+    return NextResponse.json({ success: true });
   }
-};
+
+  return NextResponse.json({ success: false });
+});

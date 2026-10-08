@@ -3,10 +3,14 @@
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
-const Search = () => {
+interface Props {
+  variant?: "page" | "hero";
+}
+
+const Search = ({ variant = "page" }: Props) => {
   const [location, setLocation] = useState("");
-  const [guests, setGuests] = useState("");
-  const [category, setCategory] = useState("");
+  const [guests, setGuests] = useState("1");
+  const [category, setCategory] = useState("King");
   const router = useRouter();
 
   const submitHandler = (e: React.FormEvent<HTMLFormElement>) => {
@@ -22,33 +26,39 @@ const Search = () => {
     router.push(`/?${queryString}`);
   };
   return (
-    <div className="row wrapper mt-5">
-      <div className="col-10 col-lg-5">
-        <form className="shadow rounded" onSubmit={submitHandler}>
-          <h2 className="mb-3">Search Rooms</h2>
-          <div className="form-group mt-3">
-            <label htmlFor="location_field" className="mb-1">
+    <div className={variant === "hero" ? "hero-search" : "search-page-shell"}>
+      <form className="search-form" onSubmit={submitHandler}>
+        {variant === "page" && (
+          <div className="search-form-heading">
+            <span className="eyebrow">Find your next stay</span>
+            <h1>Search rooms</h1>
+            <p>Choose a location, group size, and room style.</p>
+          </div>
+        )}
+        <div className="search-fields">
+          <div className="search-field search-field-location">
+            <label htmlFor={`location_field_${variant}`}>
               Location
             </label>
             <input
               type="text"
               className="form-control"
-              id="location_field"
-              placeholder="New York"
+              id={`location_field_${variant}`}
+              placeholder="Where are you going?"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
+              autoComplete="address-level2"
             />
           </div>
 
-          <div className="form-group mt-3">
-            <label htmlFor="guest_field" className="mb-1">
-              No. of Guests
+          <div className="search-field">
+            <label htmlFor={`guest_field_${variant}`}>
+              Guests
             </label>
             <select
               className="form-select"
-              id="guest_field"
+              id={`guest_field_${variant}`}
               value={guests}
-              defaultValue={guests}
               onChange={(e) => setGuests(e.target.value)}
             >
               {[1, 2, 3, 4, 5, 6].map((num) => (
@@ -59,13 +69,13 @@ const Search = () => {
             </select>
           </div>
 
-          <div className="form-group mt-3">
-            <label htmlFor="room_type_field" className="mb-1">
+          <div className="search-field">
+            <label htmlFor={`room_type_field_${variant}`}>
               Room Type
             </label>
             <select
               className="form-select"
-              id="room_type_field"
+              id={`room_type_field_${variant}`}
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             >
@@ -77,11 +87,11 @@ const Search = () => {
             </select>
           </div>
 
-          <button type="submit" className="btn form-btn w-100 py-2">
-            Search
+          <button type="submit" className="btn btn-primary-roomi search-submit">
+            Search rooms
           </button>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   );
 };

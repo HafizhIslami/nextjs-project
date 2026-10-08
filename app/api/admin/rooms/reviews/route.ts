@@ -21,12 +21,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const auth = await authenticate(request);
     if (auth instanceof NextResponse) return auth;
     request.user = auth;
-    return getRoomReviews(request, {});
+    return await getRoomReviews(request, {});
 }
 
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
     const auth = await authenticate(request);
     if (auth instanceof NextResponse) return auth;
     request.user = auth;
-    return deleteRoomReview(request, {});
+    return await deleteRoomReview(request, {});
 }
+export const dynamic = "force-dynamic";

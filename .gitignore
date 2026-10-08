@@ -8,6 +8,11 @@
 
 # testing
 /coverage
+/playwright-report/
+/test-results/
+/.playwright-browsers/
+/lighthouse-reports/
+/ui-review/
 
 # next.js
 /.next/
@@ -19,14 +24,20 @@
 # misc
 .DS_Store
 *.pem
+/public/images/inner.png
+/public/images/outer.png
 
 # debug
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
 # local env files
 *.env
+.env*
+!.env.example
+!.env.test.example
 
 # vercel
 .vercel
@@ -37,3 +48,5 @@ next-env.d.ts
 repomix*
 REVIEW.md
 build-errors.txt
+.mongo-test-data
+docs
